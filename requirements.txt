@@ -1,0 +1,6 @@
+Flask
+playsound
+
+
+#correr el proyect 
+python app.py
