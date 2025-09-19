@@ -4,7 +4,7 @@ from PyQt5.QtGui import QMovie, QRegion, QPainter, QColor, QPen
 from PyQt5.QtCore import Qt, QTimer
 
 class RoundGifLabel(QLabel):
-    def __init__(self, gif_path, size=300, border_color=QColor("yellow"), border_width=6):
+    def __init__(self, gif_path, size=400, border_color=QColor("orange"), border_width=8):
         super().__init__()
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
@@ -44,13 +44,13 @@ if __name__ == "__main__":
 
     app = QApplication([])
 
-    size = 250
+    size = 600
     label = RoundGifLabel(gif_path, size=size)
 
     # 📍 posición: esquina superior derecha
     screen = app.primaryScreen().geometry()
-    x = screen.width() - size - 20
-    y = 20
+    x = screen.width() - size - 70
+    y = 70
     label.move(x, y)
 
     label.show()
