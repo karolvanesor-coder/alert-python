@@ -98,7 +98,7 @@ if __name__ == "__main__":
     app = QApplication([])
 
     # 📏 dimensiones rectangulares grandes
-    width, height = 1200, 700
+    width, height = 2000, 1500
     label = GifWithSparks(
         gif_path,
         width=width,
