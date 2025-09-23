@@ -6,3 +6,6 @@ requests==2.31.0
 
 #correr el proyect 
 python app.py
+
+#correr en mac
+python3 app.py

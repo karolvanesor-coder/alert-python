@@ -1,4 +1,4 @@
-# 🔔 Datadog Local Alerts (Sound + Animation + Notification)
+# Datadog Local Alerts (Sound + Animation + Notification)
 
 Este proyecto permite recibir **webhooks de Datadog** en tu computadora local y mostrar alertas:  
 - **Sonoras** (archivo `alert.mp3`)  
