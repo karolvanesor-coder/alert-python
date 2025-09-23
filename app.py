@@ -50,7 +50,7 @@ def datadog_webhook():
     threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
 
     # Mostrar GIF en proceso aparte
-    threading.Thread(target=show_gif_popup, args=(gif_file, 10), daemon=True).start()
+    threading.Thread(target=show_gif_popup, args=(gif_file, 8), daemon=True).start()
 
     return {"status": "ok"}, 200
 

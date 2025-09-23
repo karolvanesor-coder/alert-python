@@ -104,7 +104,7 @@ if __name__ == "__main__":
         width=width,
         height=height,
         border_color=QColor("orange"),
-        border_width=8,
+        border_width=15,
         border_radius=0
     )
 
