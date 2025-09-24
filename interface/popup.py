@@ -1,9 +1,9 @@
 import sys
 import random
+import math
 from PyQt5.QtWidgets import QApplication, QLabel
-from PyQt5.QtGui import QMovie, QPainter, QColor, QPen, QRegion
+from PyQt5.QtGui import QMovie, QPainter, QColor, QPen
 from PyQt5.QtCore import Qt, QTimer, QPointF
-
 
 class Spark:
     def __init__(self, x, y):
@@ -20,17 +20,8 @@ class Spark:
         self.color.setAlpha(alpha)
         return self.life > 0
 
-
 class GifWithSparks(QLabel):
-    def __init__(
-        self,
-        gif_path,
-        width=1200,
-        height=700,
-        border_color=QColor("orange"),
-        border_width=10,
-        border_radius=50,
-    ):
+    def __init__(self, gif_path, width=1200, height=700, border_color=QColor("orange"), border_width=10, border_radius=50):
         super().__init__()
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
@@ -49,9 +40,6 @@ class GifWithSparks(QLabel):
         self.border_color = border_color
         self.border_width = border_width
         self.border_radius = border_radius
-
-        # 🪄 aplicar máscara de esquinas redondeadas (recorta GIF + ventana)
-        self.setMask(QRegion(self.rect(), QRegion.RoundedRectangle, self.border_radius, self.border_radius))
 
         # ⏱ animación de partículas
         self.timer = QTimer(self)
@@ -93,7 +81,7 @@ class GifWithSparks(QLabel):
             self.border_width // 2,
             self.border_width // 2,
             -self.border_width // 2,
-            -self.border_width // 2,
+            -self.border_width // 2
         )
         painter.drawRoundedRect(rect, self.border_radius, self.border_radius)
 
@@ -103,14 +91,13 @@ class GifWithSparks(QLabel):
             painter.setBrush(spark.color)
             painter.drawEllipse(spark.pos, spark.size, spark.size)
 
-
 if __name__ == "__main__":
     gif_path = sys.argv[1]
     duration = int(sys.argv[2])
 
     app = QApplication([])
 
-    # 📏 dimensiones rectangulares grandes (pantalla 4K 3840x2160)
+    # 📏 dimensiones rectangulares grandes
     width, height = 2400, 1350
     label = GifWithSparks(
         gif_path,
@@ -118,7 +105,7 @@ if __name__ == "__main__":
         height=height,
         border_color=QColor("orange"),
         border_width=20,
-        border_radius=70,
+        border_radius=70
     )
 
     # 📍 centrar en la pantalla
