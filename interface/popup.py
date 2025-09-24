@@ -101,13 +101,13 @@ class MessagePopup(QWidget):
     def __init__(self, message, duration, width=2050, height=200):
         super().__init__()
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        self.setStyleSheet("background-color: white; border: 5px solid red; border-radius: 20px; top:-12px;")
+        self.setStyleSheet("background-color: white; border: 5px solid red; border-radius: 20px;")
         self.resize(width, height)
 
         layout = QVBoxLayout(self)
         text_label = QLabel(message)
         text_label.setFont(QFont("Arial", 20, QFont.Bold))
-        text_label.setStyleSheet("color: red; background: transparent;")
+        text_label.setStyleSheet("color: #B22222; background: transparent;")
         text_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(text_label)
 
@@ -129,8 +129,8 @@ if __name__ == "__main__":
 
     # popup mensaje (debajo del GIF)
     msg_popup = MessagePopup(message, duration)
-    msg_x = (screen.width() - msg_popup.width()) // 2
-    msg_y = gif_y + gif_popup.height() + 20  # debajo del GIF
+    msg_x = (screen.width() - msg_popup.width()) // 2 + 30
+    msg_y = gif_y + gif_popup.height() + 80  # debajo del GIF
     msg_popup.move(msg_x, msg_y)
 
     gif_popup.show()
