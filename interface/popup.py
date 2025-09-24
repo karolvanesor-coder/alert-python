@@ -24,7 +24,7 @@ class Spark:
 class GifWithSparks(QWidget):
     def __init__(self, gif_path, duration,
                  width=2000, height=1000,
-                 border_color=QColor("orange"), border_width=20, border_radius=0):
+                 border_color=QColor("red"), border_width=20, border_radius=0):
         super().__init__()
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
