@@ -20,9 +20,9 @@ class Spark:
         self.color.setAlpha(alpha)
         return self.life > 0
 
-# 📺 Popup con GIF + borde + chispas + mensaje libre
+# 📺 Popup con GIF + borde + chispas
 class GifWithSparks(QWidget):
-    def __init__(self, gif_path, duration, message,
+    def __init__(self, gif_path, duration,
                  width=2400, height=1350,
                  border_color=QColor("orange"), border_width=20, border_radius=0):
         super().__init__()
@@ -30,29 +30,14 @@ class GifWithSparks(QWidget):
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.resize(width, height)
 
-        # Layout principal
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(40, 40, 40, 40)
-        layout.setSpacing(20)
-
         # 🎬 GIF
+        layout = QVBoxLayout(self)
         self.gif_label = QLabel()
         self.movie = QMovie(gif_path)
         self.movie.setScaledSize(self.size())
         self.gif_label.setMovie(self.movie)
         self.movie.start()
         layout.addWidget(self.gif_label, alignment=Qt.AlignCenter)
-
-        # 📝 Mensaje flotante (sin recuadro)
-        self.text_label = QLabel(message)
-        self.text_label.setFont(QFont("Arial", 72, QFont.Bold))  # tamaño grande
-        self.text_label.setStyleSheet("""
-            color: red;
-            background: transparent;
-            text-align: center;
-        """)
-        self.text_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.text_label, alignment=Qt.AlignCenter)
 
         # ⚡ partículas
         self.sparks = []
@@ -69,7 +54,6 @@ class GifWithSparks(QWidget):
         QTimer.singleShot(duration * 1000, self.close)
 
     def update_particles(self):
-        # generar chispas en bordes
         if random.random() < 0.5:
             side = random.choice(["top", "bottom", "left", "right"])
             if side == "top":
@@ -94,7 +78,7 @@ class GifWithSparks(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # 🎨 borde rectangular principal
+        # 🎨 borde
         pen = QPen(self.border_color, self.border_width)
         painter.setPen(pen)
         painter.setBrush(Qt.NoBrush)
@@ -112,6 +96,23 @@ class GifWithSparks(QWidget):
             painter.setBrush(spark.color)
             painter.drawEllipse(spark.pos, spark.size, spark.size)
 
+# 📝 Ventana de mensaje separada
+class MessagePopup(QWidget):
+    def __init__(self, message, duration, width=1000, height=200):
+        super().__init__()
+        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        self.setStyleSheet("background-color: white; border: 5px solid red; border-radius: 20px;")
+        self.resize(width, height)
+
+        layout = QVBoxLayout(self)
+        text_label = QLabel(message)
+        text_label.setFont(QFont("Arial", 48, QFont.Bold))
+        text_label.setStyleSheet("color: red; background: transparent;")
+        text_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(text_label)
+
+        QTimer.singleShot(duration * 1000, self.close)
+
 if __name__ == "__main__":
     gif_path = sys.argv[1]
     duration = int(sys.argv[2])
@@ -119,14 +120,20 @@ if __name__ == "__main__":
 
     app = QApplication([])
 
-    width, height = 2400, 1350
-    popup = GifWithSparks(gif_path, duration, message, width, height)
-
-    # 📍 centrar pantalla
+    # popup GIF
+    gif_popup = GifWithSparks(gif_path, duration)
     screen = app.primaryScreen().geometry()
-    x = (screen.width() - width) // 2
-    y = (screen.height() - height) // 2
-    popup.move(x, y)
+    gif_x = (screen.width() - gif_popup.width()) // 2
+    gif_y = (screen.height() - gif_popup.height()) // 2 - 150
+    gif_popup.move(gif_x, gif_y)
 
-    popup.show()
+    # popup mensaje (debajo del GIF)
+    msg_popup = MessagePopup(message, duration)
+    msg_x = (screen.width() - msg_popup.width()) // 2
+    msg_y = gif_y + gif_popup.height() + 20  # debajo del GIF
+    msg_popup.move(msg_x, msg_y)
+
+    gif_popup.show()
+    msg_popup.show()
+
     app.exec_()
