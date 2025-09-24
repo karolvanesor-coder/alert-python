@@ -21,7 +21,7 @@ class Spark:
         return self.life > 0
 
 class GifWithSparks(QLabel):
-    def __init__(self, gif_path, width=1200, height=700, border_color=QColor("orange"), border_width=8, border_radius=30):
+    def __init__(self, gif_path, width=1200, height=700, border_color=QColor("orange"), border_width=10, border_radius=50):
         super().__init__()
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
@@ -104,8 +104,8 @@ if __name__ == "__main__":
         width=width,
         height=height,
         border_color=QColor("orange"),
-        border_width=15,
-        border_radius=30
+        border_width=20,
+        border_radius=70
     )
 
     # 📍 centrar en la pantalla
