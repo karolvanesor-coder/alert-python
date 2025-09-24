@@ -105,7 +105,7 @@ if __name__ == "__main__":
         height=height,
         border_color=QColor("orange"),
         border_width=15,
-        border_radius=0
+        border_radius=30
     )
 
     # 📍 centrar en la pantalla
