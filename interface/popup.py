@@ -1,6 +1,6 @@
 import sys
 import random
-from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QFrame
+from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout
 from PyQt5.QtGui import QMovie, QPainter, QColor, QPen, QFont
 from PyQt5.QtCore import Qt, QTimer, QPointF
 
@@ -20,7 +20,7 @@ class Spark:
         self.color.setAlpha(alpha)
         return self.life > 0
 
-# 📺 Popup con GIF + borde + chispas + mensaje separado
+# 📺 Popup con GIF + borde + chispas + mensaje libre
 class GifWithSparks(QWidget):
     def __init__(self, gif_path, duration, message,
                  width=2400, height=1350,
@@ -35,7 +35,7 @@ class GifWithSparks(QWidget):
         layout.setContentsMargins(40, 40, 40, 40)
         layout.setSpacing(20)
 
-        # 🎬 GIF con borde y chispas
+        # 🎬 GIF
         self.gif_label = QLabel()
         self.movie = QMovie(gif_path)
         self.movie.setScaledSize(self.size())
@@ -43,25 +43,16 @@ class GifWithSparks(QWidget):
         self.movie.start()
         layout.addWidget(self.gif_label, alignment=Qt.AlignCenter)
 
-        # 📝 Mensaje en un recuadro naranja
-        self.message_box = QFrame()
-        self.message_box.setStyleSheet("""
-            QFrame {
-                background-color: orange;
-                border-radius: 20px;
-                border: 6px solid black;
-            }
-        """)
-        msg_layout = QVBoxLayout(self.message_box)
-        msg_layout.setContentsMargins(20, 10, 20, 10)
-
+        # 📝 Mensaje flotante (sin recuadro)
         self.text_label = QLabel(message)
-        self.text_label.setFont(QFont("Arial", 40, QFont.Bold))
-        self.text_label.setStyleSheet("color: black;")  # Texto negro sobre naranja
+        self.text_label.setFont(QFont("Arial", 72, QFont.Bold))  # tamaño grande
+        self.text_label.setStyleSheet("""
+            color: red;
+            background: transparent;
+            text-align: center;
+        """)
         self.text_label.setAlignment(Qt.AlignCenter)
-        msg_layout.addWidget(self.text_label)
-
-        layout.addWidget(self.message_box, alignment=Qt.AlignCenter)
+        layout.addWidget(self.text_label, alignment=Qt.AlignCenter)
 
         # ⚡ partículas
         self.sparks = []
