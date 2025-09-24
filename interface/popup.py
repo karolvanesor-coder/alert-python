@@ -23,7 +23,7 @@ class Spark:
 # 📺 Popup con GIF + borde + chispas
 class GifWithSparks(QWidget):
     def __init__(self, gif_path, duration,
-                 width=2400, height=1350,
+                 width=2000, height=1000,
                  border_color=QColor("orange"), border_width=20, border_radius=0):
         super().__init__()
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
@@ -98,15 +98,15 @@ class GifWithSparks(QWidget):
 
 # 📝 Ventana de mensaje separada
 class MessagePopup(QWidget):
-    def __init__(self, message, duration, width=1000, height=200):
+    def __init__(self, message, duration, width=2050, height=200):
         super().__init__()
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        self.setStyleSheet("background-color: white; border: 5px solid red; border-radius: 20px;")
+        self.setStyleSheet("background-color: white; border: 5px solid red; border-radius: 20px; top:-12px;")
         self.resize(width, height)
 
         layout = QVBoxLayout(self)
         text_label = QLabel(message)
-        text_label.setFont(QFont("Arial", 48, QFont.Bold))
+        text_label.setFont(QFont("Arial", 20, QFont.Bold))
         text_label.setStyleSheet("color: red; background: transparent;")
         text_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(text_label)
