@@ -32,7 +32,7 @@ class GifWithSparks(QWidget):
 
         # 🎬 GIF
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)  
+        layout.setContentsMargins(15, 15, 15, 15)  
         layout.setSpacing(0)   
         self.gif_label = QLabel()
         self.movie = QMovie(gif_path)
@@ -100,16 +100,16 @@ class GifWithSparks(QWidget):
 
 # 📝 Ventana de mensaje separada
 class MessagePopup(QWidget):
-    def __init__(self, message, duration, width=2050, height=200):
+    def __init__(self, message, duration, width=2010, height=200):
         super().__init__()
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        self.setStyleSheet("background-color: white; border: 5px solid red; border-radius: 20px;")
+        self.setStyleSheet("background-color: black; border: 5px solid red; border-radius: 20px;")
         self.resize(width, height)
 
         layout = QVBoxLayout(self)
         text_label = QLabel(message)
         text_label.setFont(QFont("Arial", 20, QFont.Bold))
-        text_label.setStyleSheet("color: #B22222; background: transparent;")
+        text_label.setStyleSheet("color: white; background: transparent;")
         text_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(text_label)
 
@@ -131,8 +131,8 @@ if __name__ == "__main__":
 
     # popup mensaje (debajo del GIF)
     msg_popup = MessagePopup(message, duration)
-    msg_x = (screen.width() - msg_popup.width()) // 2 + 30
-    msg_y = gif_y + gif_popup.height() + 80  # debajo del GIF
+    msg_x = (screen.width() - msg_popup.width()) // 2 + 20
+    msg_y = gif_y + gif_popup.height() + 30  # debajo del GIF
     msg_popup.move(msg_x, msg_y)
 
     gif_popup.show()
