@@ -14,20 +14,19 @@ class GifPopup(QWidget):
         # GIF
         gif_label = QLabel()
         movie = QMovie(gif_path)
-        movie.setScaledSize(Qt.QSize(2400, 1350))  # 🔥 Forzamos tamaño 2400x1350
         gif_label.setMovie(movie)
         movie.start()
         layout.addWidget(gif_label, alignment=Qt.AlignCenter)
 
         # Mensaje
         text_label = QLabel(message)
-        text_label.setFont(QFont("Arial", 48, QFont.Bold))  # Texto más grande para este tamaño
+        text_label.setFont(QFont("Arial", 24, QFont.Bold))
         text_label.setStyleSheet("color: red;")
         text_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(text_label)
 
         self.setLayout(layout)
-        self.resize(2400, 1350)  # 🔥 Ajustamos ventana al tamaño del GIF
+        self.resize(1000, 700)
 
         # Cerrar automático
         QTimer.singleShot(duration * 1000, self.close)
