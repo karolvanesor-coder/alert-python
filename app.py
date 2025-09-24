@@ -22,22 +22,24 @@ ALERT_CONFIG = {
     }
 }
 
-# Valores por defecto si no coincide ningún tag
+# Valores por defecto
 DEFAULT_SOUND = "./sound/alert.mp3"
 DEFAULT_GIF = "./gif/alert.gif"
 
-# Lanzar ventana GIF en proceso independiente
-def show_gif_popup(gif_path, duration=4):
-    subprocess.Popen([sys.executable, "./interface/popup.py", gif_path, str(duration)])
+# Lanzar ventana GIF en proceso independiente con mensaje
+def show_gif_popup(gif_path, duration=4, message="⚠️ Alerta sin mensaje"):
+    subprocess.Popen([sys.executable, "./interface/popup.py", gif_path, str(duration), message])
 
 @app.route("/datadog-webhook", methods=["POST"])
 def datadog_webhook():
     data = request.json
     print("📩 Webhook recibido:", data)
 
-    raw_tags = data.get("tags", [])
+    # Extraer datos
+    raw_tags = data.get("tags", "")
+    host = data.get("host", "Desconocido")
 
-    # Normalizar: puede ser lista o string
+    # Normalizar tags
     if isinstance(raw_tags, str):
         tags = [t.strip().upper() for t in raw_tags.split(",") if t.strip()]
     else:
@@ -45,27 +47,28 @@ def datadog_webhook():
 
     print("✅ Tags procesados:", tags)
 
-    # Buscar primer tag que coincida
+    # Buscar primer tag válido
     selected_tag = next((tag for tag in tags if tag in ALERT_CONFIG), None)
 
     if selected_tag:
         sound_file = ALERT_CONFIG[selected_tag]["sound"]
         gif_file = ALERT_CONFIG[selected_tag]["gif"]
-        print(f"🚨 Disparando alerta por TAG: {selected_tag}")
+        message = f"🚨 {selected_tag}\nHost: {host}"
+        print(f"🚨 Disparando alerta por TAG: {selected_tag} desde {host}")
     else:
         sound_file = DEFAULT_SOUND
         gif_file = DEFAULT_GIF
-        print("⚠️ Ningún tag coincide, usando alerta por defecto")
+        message = f"⚠️ Alerta por defecto\nHost: {host}"
+        print(f"⚠️ Ningún tag coincide, alerta por defecto desde {host}")
 
-    # Reproducir sonido en hilo aparte
+    # Reproducir sonido
     threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
 
-    # Mostrar GIF en proceso aparte
-    threading.Thread(target=show_gif_popup, args=(gif_file, 6), daemon=True).start()
+    # Mostrar popup con mensaje
+    threading.Thread(target=show_gif_popup, args=(gif_file, 6, message), daemon=True).start()
 
-    return {"status": "ok", "tags_recibidos": tags}, 200
+    return {"status": "ok", "tags_recibidos": tags, "host": host}, 200
 
 if __name__ == "__main__":
     print("Flask escuchando en http://127.0.0.1:5006")
     app.run(port=5006, debug=True)
-
