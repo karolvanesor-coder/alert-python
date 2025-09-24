@@ -1,6 +1,5 @@
 from flask import Flask, request
 from playsound import playsound
-from plyer import notification  # 🔔 Notificaciones del sistema
 import threading
 import subprocess
 import sys
@@ -31,25 +30,10 @@ DEFAULT_GIF = "./gif/alert.gif"
 def show_gif_popup(gif_path, duration=4):
     subprocess.Popen([sys.executable, "./interface/popup.py", gif_path, str(duration)])
 
-# Mostrar notificación del sistema
-def show_notification(title, message):
-    try:
-        notification.notify(
-            title=title,
-            message=message,
-            timeout=8  # segundos
-        )
-    except Exception as e:
-        print(f"⚠️ Error mostrando notificación: {e}")
-
 @app.route("/datadog-webhook", methods=["POST"])
 def datadog_webhook():
     data = request.json
     print("📩 Webhook recibido:", data)
-
-    # Extraer título y cuerpo del evento
-    event_title = data.get("title", "Evento Datadog")
-    event_body = data.get("body", "Sin detalles")
 
     raw_tags = data.get("tags", [])
 
@@ -72,11 +56,6 @@ def datadog_webhook():
         sound_file = DEFAULT_SOUND
         gif_file = DEFAULT_GIF
         print("⚠️ Ningún tag coincide, usando alerta por defecto")
-
-    # 🔔 Notificación del sistema
-    notif_title = f"🚨 Alerta {selected_tag or 'GENÉRICA'}"
-    notif_message = f"{event_title}\n{event_body}"
-    threading.Thread(target=show_notification, args=(notif_title, notif_message), daemon=True).start()
 
     # Reproducir sonido en hilo aparte
     threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
