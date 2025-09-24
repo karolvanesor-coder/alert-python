@@ -47,7 +47,7 @@ class GifWithSparks(QWidget):
         self.message_box = QFrame()
         self.message_box.setStyleSheet("""
             QFrame {
-                background-color: orange;
+                background-color: withe;
                 border-radius: 20px;
                 border: 6px solid black;
             }
