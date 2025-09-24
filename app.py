@@ -3,6 +3,7 @@ from playsound import playsound
 import threading
 import subprocess
 import sys
+from plyer import notification  # 👈 para notificaciones nativas
 
 app = Flask(__name__)
 
@@ -46,13 +47,21 @@ def datadog_webhook():
         sound_file = DEFAULT_SOUND
         gif_file = DEFAULT_GIF
 
+    # 🔔 Notificación con host y tag
+    host = data.get("host", "host desconocido")
+    notification.notify(
+        title=f"🚨 Alerta {selected_tag or 'DEFAULT'}",
+        message=f"Se activó la alarma en {host}",
+        timeout=6  # segundos visible
+    )
+
     # Reproducir sonido en hilo aparte
     threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
 
     # Mostrar GIF en proceso aparte
     threading.Thread(target=show_gif_popup, args=(gif_file, 8), daemon=True).start()
 
-    return {"status": "ok"}, 200
+    return {"status": "ok", "tags_recibidos": tags, "host": host}, 200
 
 if __name__ == "__main__":
     print("Flask escuchando en http://127.0.0.1:5006")
