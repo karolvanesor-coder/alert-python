@@ -20,6 +20,8 @@ class Spark:
         self.color.setAlpha(alpha)
         return self.life > 0
 
+from PyQt5.QtGui import QRegion
+
 class GifWithSparks(QLabel):
     def __init__(self, gif_path, width=1200, height=700, border_color=QColor("orange"), border_width=10, border_radius=50):
         super().__init__()
@@ -40,6 +42,14 @@ class GifWithSparks(QLabel):
         self.border_color = border_color
         self.border_width = border_width
         self.border_radius = border_radius
+
+        # 🪄 aplicar máscara de esquinas redondeadas
+        mask = QRegion(self.rect(), QRegion.Rectangle)
+        rounded = QRegion(self.rect(), QRegion.Rectangle)
+        rounded = QRegion(self.rect(), QRegion.Ellipse)  # truco para curva
+        mask = QRegion(self.rect(), QRegion.Rectangle)
+        mask = QRegion(self.rect(), QRegion.Rectangle)
+        self.setMask(QRegion(self.rect(), QRegion.RoundedRectangle, border_radius, border_radius))
 
         # ⏱ animación de partículas
         self.timer = QTimer(self)
