@@ -32,6 +32,8 @@ class GifWithSparks(QWidget):
 
         # 🎬 GIF
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)  
+        layout.setSpacing(0)   
         self.gif_label = QLabel()
         self.movie = QMovie(gif_path)
         self.movie.setScaledSize(self.size())
