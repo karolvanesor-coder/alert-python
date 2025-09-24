@@ -43,21 +43,21 @@ class GifWithSparks(QWidget):
         self.movie.start()
         layout.addWidget(self.gif_label, alignment=Qt.AlignCenter)
 
-        # 📝 Mensaje en un recuadro aparte
+        # 📝 Mensaje en un recuadro naranja
         self.message_box = QFrame()
         self.message_box.setStyleSheet("""
             QFrame {
-                background-color: black;
-                border-radius: 15px;
-                border: 4px solid red;
+                background-color: orange;
+                border-radius: 20px;
+                border: 6px solid black;
             }
         """)
         msg_layout = QVBoxLayout(self.message_box)
         msg_layout.setContentsMargins(20, 10, 20, 10)
 
         self.text_label = QLabel(message)
-        self.text_label.setFont(QFont("Arial", 36, QFont.Bold))
-        self.text_label.setStyleSheet("color: red;")
+        self.text_label.setFont(QFont("Arial", 40, QFont.Bold))
+        self.text_label.setStyleSheet("color: black;")  # Texto negro sobre naranja
         self.text_label.setAlignment(Qt.AlignCenter)
         msg_layout.addWidget(self.text_label)
 
