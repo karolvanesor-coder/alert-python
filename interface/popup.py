@@ -100,7 +100,7 @@ class GifWithSparks(QWidget):
 
 # 📝 Ventana de mensaje separada
 class MessagePopup(QWidget):
-    def __init__(self, message, duration, width=2010, height=200):
+    def __init__(self, message, duration, width=2025, height=200):
         super().__init__()
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.setStyleSheet("background-color: black; border: 5px solid red; border-radius: 20px;")
@@ -131,7 +131,7 @@ if __name__ == "__main__":
 
     # popup mensaje (debajo del GIF)
     msg_popup = MessagePopup(message, duration)
-    msg_x = (screen.width() - msg_popup.width()) // 2 + 20
+    msg_x = gif_x
     msg_y = gif_y + gif_popup.height() + 30  # debajo del GIF
     msg_popup.move(msg_x, msg_y)
 
