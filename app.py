@@ -33,37 +33,26 @@ def show_gif_popup(gif_path, duration=4):
 @app.route("/datadog-webhook", methods=["POST"])
 def datadog_webhook():
     data = request.json
+    tags = data.get("tags", [])
     print("📩 Webhook recibido:", data)
 
-    raw_tags = data.get("tags", [])
-
-    # Normalizar: puede ser lista o string
-    if isinstance(raw_tags, str):
-        tags = [t.strip().upper() for t in raw_tags.split(",") if t.strip()]
-    else:
-        tags = [str(t).upper() for t in raw_tags]
-
-    print("✅ Tags procesados:", tags)
-
-    # Buscar primer tag que coincida
+    # Buscar primer tag que exista en nuestra configuración
     selected_tag = next((tag for tag in tags if tag in ALERT_CONFIG), None)
 
     if selected_tag:
         sound_file = ALERT_CONFIG[selected_tag]["sound"]
         gif_file = ALERT_CONFIG[selected_tag]["gif"]
-        print(f"🚨 Disparando alerta por TAG: {selected_tag}")
     else:
         sound_file = DEFAULT_SOUND
         gif_file = DEFAULT_GIF
-        print("⚠️ Ningún tag coincide, usando alerta por defecto")
 
     # Reproducir sonido en hilo aparte
     threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
 
     # Mostrar GIF en proceso aparte
-    threading.Thread(target=show_gif_popup, args=(gif_file, 6), daemon=True).start()
+    threading.Thread(target=show_gif_popup, args=(gif_file, 8), daemon=True).start()
 
-    return {"status": "ok", "tags_recibidos": tags}, 200
+    return {"status": "ok"}, 200
 
 if __name__ == "__main__":
     print("Flask escuchando en http://127.0.0.1:5006")
