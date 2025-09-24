@@ -103,7 +103,7 @@ class MessagePopup(QWidget):
     def __init__(self, message, duration, width=2025, height=200):
         super().__init__()
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        self.setStyleSheet("background-color: black; border: 5px solid red; border-radius: 20px;")
+        self.setStyleSheet("background-color: black; border-radius: 20px;")
         self.resize(width, height)
 
         layout = QVBoxLayout(self)
