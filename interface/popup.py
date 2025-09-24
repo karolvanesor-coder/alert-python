@@ -1,6 +1,6 @@
 import sys
 import random
-from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QFrame
 from PyQt5.QtGui import QMovie, QPainter, QColor, QPen, QFont
 from PyQt5.QtCore import Qt, QTimer, QPointF
 
@@ -20,7 +20,7 @@ class Spark:
         self.color.setAlpha(alpha)
         return self.life > 0
 
-# 📺 Popup con GIF + borde + chispas + mensaje
+# 📺 Popup con GIF + borde + chispas + mensaje separado
 class GifWithSparks(QWidget):
     def __init__(self, gif_path, duration, message,
                  width=2400, height=1350,
@@ -30,11 +30,12 @@ class GifWithSparks(QWidget):
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.resize(width, height)
 
-        # Layout vertical (GIF + texto)
+        # Layout principal
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(30, 30, 30, 30)
+        layout.setContentsMargins(40, 40, 40, 40)
+        layout.setSpacing(20)
 
-        # 🎬 GIF
+        # 🎬 GIF con borde y chispas
         self.gif_label = QLabel()
         self.movie = QMovie(gif_path)
         self.movie.setScaledSize(self.size())
@@ -42,12 +43,25 @@ class GifWithSparks(QWidget):
         self.movie.start()
         layout.addWidget(self.gif_label, alignment=Qt.AlignCenter)
 
-        # 📝 Mensaje rojo
+        # 📝 Mensaje en un recuadro aparte
+        self.message_box = QFrame()
+        self.message_box.setStyleSheet("""
+            QFrame {
+                background-color: black;
+                border-radius: 15px;
+                border: 4px solid red;
+            }
+        """)
+        msg_layout = QVBoxLayout(self.message_box)
+        msg_layout.setContentsMargins(20, 10, 20, 10)
+
         self.text_label = QLabel(message)
-        self.text_label.setFont(QFont("Arial", 48, QFont.Bold))
+        self.text_label.setFont(QFont("Arial", 36, QFont.Bold))
         self.text_label.setStyleSheet("color: red;")
         self.text_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.text_label)
+        msg_layout.addWidget(self.text_label)
+
+        layout.addWidget(self.message_box, alignment=Qt.AlignCenter)
 
         # ⚡ partículas
         self.sparks = []
@@ -89,7 +103,7 @@ class GifWithSparks(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # 🎨 borde rectangular
+        # 🎨 borde rectangular principal
         pen = QPen(self.border_color, self.border_width)
         painter.setPen(pen)
         painter.setBrush(Qt.NoBrush)
