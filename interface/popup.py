@@ -23,7 +23,7 @@ class Spark:
 # 📺 Popup con GIF + borde + chispas
 class GifWithSparks(QWidget):
     def __init__(self, gif_path, duration,
-                 width=2000, height=1000,
+                 width, height,
                  border_color=QColor("red"), border_width=20, border_radius=0):
         super().__init__()
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
@@ -32,11 +32,11 @@ class GifWithSparks(QWidget):
 
         # 🎬 GIF
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(15, 15, 15, 15)  
-        layout.setSpacing(0)   
+        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(0)
         self.gif_label = QLabel()
         self.movie = QMovie(gif_path)
-        self.movie.setScaledSize(self.size())
+        self.movie.setScaledSize(self.size())  # adapta GIF al tamaño de la ventana
         self.gif_label.setMovie(self.movie)
         self.movie.start()
         layout.addWidget(self.gif_label, alignment=Qt.AlignCenter)
@@ -90,7 +90,7 @@ class GifWithSparks(QWidget):
             -self.border_width // 2,
             -self.border_width // 2
         )
-        painter.drawRoundedRect(rect, self.border_radius, self.border_radius)
+        painter.drawRect(rect)
 
         # ⚡ chispas
         for spark in self.sparks:
@@ -100,7 +100,7 @@ class GifWithSparks(QWidget):
 
 # 📝 Ventana de mensaje separada
 class MessagePopup(QWidget):
-    def __init__(self, message, duration, width=2025, height=200):
+    def __init__(self, message, duration, width, height):
         super().__init__()
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.setStyleSheet("background-color: black; border-radius: 20px;")
@@ -121,18 +121,25 @@ if __name__ == "__main__":
     message = sys.argv[3] if len(sys.argv) > 3 else "⚠️ Alerta"
 
     app = QApplication([])
+    screen = app.primaryScreen().geometry()
+
+    # 📐 proporciones dinámicas según pantalla
+    gif_width = int(screen.width() * 0.7)
+    gif_height = int(screen.height() * 0.5)
+
+    msg_width = gif_width + 30   
+    msg_height = int(screen.height() * 0.15)
 
     # popup GIF
-    gif_popup = GifWithSparks(gif_path, duration)
-    screen = app.primaryScreen().geometry()
-    gif_x = (screen.width() - gif_popup.width()) // 2
-    gif_y = (screen.height() - gif_popup.height()) // 2 - 150
+    gif_popup = GifWithSparks(gif_path, duration, gif_width, gif_height)
+    gif_x = (screen.width() - gif_width) // 2
+    gif_y = (screen.height() - (gif_height + msg_height + 50)) // 2
     gif_popup.move(gif_x, gif_y)
 
-    # popup mensaje (debajo del GIF)
-    msg_popup = MessagePopup(message, duration)
-    msg_x = gif_x
-    msg_y = gif_y + gif_popup.height() + 30  # debajo del GIF
+    # popup mensaje (centrado según nuevo ancho)
+    msg_popup = MessagePopup(message, duration, msg_width, msg_height)
+    msg_x = gif_x - 1  # ⬅️ ajuste centrado
+    msg_y = gif_y + gif_height + 30
     msg_popup.move(msg_x, msg_y)
 
     gif_popup.show()
