@@ -51,8 +51,8 @@ def datadog_webhook():
     # --- Lógica especial: solo DISCO tiene warning amarillo ---
     if selected_tag == "DISCO" and "warn" in alert_type:
         border_color = "yellow"
-        sound_file = "./sound/warn.mp3"       # sonido especial preventivo
-        gif_file = "./gif/warn.gif"           # gif especial preventivo
+        sound_file = "./sound/alert-warn.mp3"       
+        gif_file = "./gif/warn.gif"           
         titulo = "⚠️ ALERTA PREVENTIVA DE DISCO"
         emoji = "🟡"
         print("🟡 Alerta preventiva de DISCO detectada")
