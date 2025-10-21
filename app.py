@@ -64,13 +64,13 @@ def datadog_webhook():
     if selected_tag:
         sound_file = ALERT_CONFIG[selected_tag]["sound"]
         gif_file = ALERT_CONFIG[selected_tag]["gif"]
-        message = f"{titulo}\n{emoji} {selected_tag}\nHost: {host}"
-        print(f"{emoji} Disparando alerta por TAG: {selected_tag} desde {host}")
+        message = f"{titulo}\n {selected_tag}\nHost: {host}"
+        print(f" Disparando alerta por TAG: {selected_tag} desde {host}")
     else:
         sound_file = DEFAULT_SOUND
         gif_file = DEFAULT_GIF
-        message = f"{titulo}\n{emoji} Alerta por defecto\nHost: {host}"
-        print(f"{emoji} Ningún tag coincide, alerta por defecto desde {host}")
+        message = f"{titulo}\n Alerta por defecto\nHost: {host}"
+        print(f" Ningún tag coincide, alerta por defecto desde {host}")
 
     # Reproducir sonido
     threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
