@@ -7,7 +7,7 @@ import os
 
 app = Flask(__name__)
 
-# Configuración base
+# --- CONFIGURACIÓN DE ALERTAS ---
 ALERT_CONFIG = {
     "CPU": {
         "sound": "./sound/alert.mp3",
@@ -19,17 +19,20 @@ ALERT_CONFIG = {
     },
     "DISCO": {
         "sound": "./sound/alert2.mp3",
-        "gif": "./gif/alert2.gif"
+        "gif": "./gif/alert2.gif",
+        "warn_sound": "./sound/warn.mp3",   # sonido preventivo
+        "warn_gif": "./gif/warn.gif"        # gif preventivo
     }
 }
 
 DEFAULT_SOUND = "./sound/alert.mp3"
 DEFAULT_GIF = "./gif/alert.gif"
 
-# Popup independiente
-def show_gif_popup(gif_path, duration=4, message="⚠️ Alerta sin mensaje", border_color="red"):
+# --- MOSTRAR GIF POPUP ---
+def show_gif_popup(gif_path, duration=5, message="⚠️ Alerta sin mensaje", border_color="red"):
     subprocess.Popen([sys.executable, "./interface/popup.py", gif_path, str(duration), message, border_color])
 
+# --- WEBHOOK DATADOG ---
 @app.route("/datadog-webhook", methods=["POST"])
 def datadog_webhook():
     data = request.json
@@ -37,7 +40,7 @@ def datadog_webhook():
 
     raw_tags = data.get("tags", "")
     host = data.get("host", "Desconocido")
-    alert_type = str(data.get("alert_type", "alert")).lower()  # "warn" o "alert"
+    alert_type = str(data.get("alert_type", "alert")).lower()  # puede venir 'warn' o 'alert'
 
     # Normalizar tags
     if isinstance(raw_tags, str):
@@ -48,45 +51,42 @@ def datadog_webhook():
 
     selected_tag = next((tag for tag in tags if tag in ALERT_CONFIG), None)
 
-    # --- 🔸 FILTRO PERSONALIZADO SOLO PARA WARNING DE DISCO ---
+    # --- FILTRO: SOLO WARNINGS DE DISCO ---
     if "warn" in alert_type and selected_tag != "DISCO":
         print(f"⚠️ Alerta WARN ignorada (solo se aceptan warnings de DISCO). Tag recibido: {selected_tag}")
         return {"status": "ignored", "reason": "solo warnings de DISCO"}, 200
 
-    # Determinar color y mensaje
-    if "warn" in alert_type:
-        border_color = "yellow"
-        titulo = "⚠️ ALERTA PREVENTIVA"
-        emoji = ""
-        gif_file = "./gif/warn.gif"  # usa tu gif especial para warning
-    else:
-        border_color = "red"
-        titulo = "🚨 ALERTA CRÍTICA"
-        emoji = ""
-        gif_file = None  # se definirá abajo
-
+    # --- DETERMINAR SONIDO, GIF Y COLOR ---
     if selected_tag:
-        base_sound = ALERT_CONFIG[selected_tag]["sound"]
-        base_gif = ALERT_CONFIG[selected_tag]["gif"]
-        if not gif_file:  # usa el normal si no hay warn.gif asignado
-            gif_file = base_gif
-        message = f"{titulo}\n{emoji} {selected_tag}\nHost: {host}"
+        config = ALERT_CONFIG[selected_tag]
+
+        if "warn" in alert_type:
+            border_color = "yellow"
+            titulo = "⚠️ ALERTA PREVENTIVA"
+            sound_file = config.get("warn_sound", DEFAULT_SOUND)
+            gif_file = config.get("warn_gif", DEFAULT_GIF)
+        else:
+            border_color = "red"
+            titulo = "🚨 ALERTA CRÍTICA"
+            sound_file = config.get("sound", DEFAULT_SOUND)
+            gif_file = config.get("gif", DEFAULT_GIF)
+
+        message = f"{titulo}\n🔹 {selected_tag}\nHost: {host}"
         print(f"🚨 Disparando alerta ({alert_type}) por TAG: {selected_tag} desde {host}")
     else:
-        base_sound = DEFAULT_SOUND
-        if not gif_file:
-            gif_file = DEFAULT_GIF
-        message = f"{titulo}\n⚠️ Alerta por defecto\nHost: {host}"
-        print("⚠️ Ningún tag coincide, alerta por defecto")
+        border_color = "red"
+        sound_file = DEFAULT_SOUND
+        gif_file = DEFAULT_GIF
+        message = f"🚨 ALERTA DESCONOCIDA\nHost: {host}"
+        print("⚠️ Alerta sin tag conocido.")
 
-    # Reproducir sonido
-    threading.Thread(target=playsound, args=(base_sound,), daemon=True).start()
-
-    # Mostrar popup
+    # --- EJECUTAR ALERTA ---
+    threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
     threading.Thread(target=show_gif_popup, args=(gif_file, 6, message, border_color), daemon=True).start()
 
-    print(f"🟡 Color asignado: {border_color.upper()} | Sonido: {base_sound}")
-    return {"status": "ok", "tags_recibidos": tags, "host": host, "color": border_color}, 200
+    print(f"🎵 Sonido: {sound_file} | 🖼️ GIF: {gif_file} | 🟡 Color: {border_color.upper()}")
+    return {"status": "ok", "tag": selected_tag, "color": border_color}, 200
+
 
 if __name__ == "__main__":
     print("Flask escuchando en http://127.0.0.1:5006")
