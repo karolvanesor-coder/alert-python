@@ -43,10 +43,12 @@ def datadog_webhook():
     # Determinar color y título según tipo
     if "warn" in alert_type:
         border_color = "yellow"
-        titulo = "🟡 ALERTA PREVENTIVA (WARNING)"
+        titulo = "⚠️ ALERTA PREVENTIVA"
+        emoji = "⚠️"
     else:
         border_color = "red"
-        titulo = "🔴 ALERTA CRÍTICA (ALERT)"
+        titulo = "🚨 ALERTA CRÍTICA"
+        emoji = "🚨"
 
     # Normalizar tags
     if isinstance(raw_tags, str):
@@ -62,13 +64,13 @@ def datadog_webhook():
     if selected_tag:
         sound_file = ALERT_CONFIG[selected_tag]["sound"]
         gif_file = ALERT_CONFIG[selected_tag]["gif"]
-        message = f"{titulo}\n🚨 {selected_tag}\nHost: {host}"
-        print(f"🚨 Disparando alerta por TAG: {selected_tag} desde {host}")
+        message = f"{titulo}\n{emoji} {selected_tag}\nHost: {host}"
+        print(f"{emoji} Disparando alerta por TAG: {selected_tag} desde {host}")
     else:
         sound_file = DEFAULT_SOUND
         gif_file = DEFAULT_GIF
-        message = f"{titulo}\n⚠️ Alerta por defecto\nHost: {host}"
-        print(f"⚠️ Ningún tag coincide, alerta por defecto desde {host}")
+        message = f"{titulo}\n{emoji} Alerta por defecto\nHost: {host}"
+        print(f"{emoji} Ningún tag coincide, alerta por defecto desde {host}")
 
     # Reproducir sonido
     threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
@@ -82,6 +84,7 @@ def datadog_webhook():
 
     print(f"🟡 Color asignado: {border_color.upper()}")
     return {"status": "ok", "tags_recibidos": tags, "host": host, "color": border_color}, 200
+
 
 if __name__ == "__main__":
     print("Flask escuchando en http://127.0.0.1:5006")
