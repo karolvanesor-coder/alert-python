@@ -26,9 +26,9 @@ ALERT_CONFIG = {
 DEFAULT_SOUND = "./sound/alert.mp3"
 DEFAULT_GIF = "./gif/alert.gif"
 
-# Lanzar ventana GIF en proceso independiente con mensaje
-def show_gif_popup(gif_path, duration=4, message="⚠️ Alerta sin mensaje"):
-    subprocess.Popen([sys.executable, "./interface/popup.py", gif_path, str(duration), message])
+# Lanzar ventana GIF en proceso independiente con mensaje y color
+def show_gif_popup(gif_path, duration=4, message="⚠️ Alerta sin mensaje", border_color="red"):
+    subprocess.Popen([sys.executable, "./interface/popup.py", gif_path, str(duration), message, border_color])
 
 @app.route("/datadog-webhook", methods=["POST"])
 def datadog_webhook():
@@ -38,6 +38,13 @@ def datadog_webhook():
     # Extraer datos
     raw_tags = data.get("tags", "")
     host = data.get("host", "Desconocido")
+    alert_type = str(data.get("alert_type", "alert")).lower()  # 👈 capturamos tipo de alerta
+
+    # Determinar color según tipo
+    if "warn" in alert_type:
+        border_color = "yellow"
+    else:
+        border_color = "red"
 
     # Normalizar tags
     if isinstance(raw_tags, str):
@@ -64,10 +71,11 @@ def datadog_webhook():
     # Reproducir sonido
     threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
 
-    # Mostrar popup con mensaje
-    threading.Thread(target=show_gif_popup, args=(gif_file, 6, message), daemon=True).start()
+    # Mostrar popup con mensaje y color
+    threading.Thread(target=show_gif_popup, args=(gif_file, 6, message, border_color), daemon=True).start()
 
-    return {"status": "ok", "tags_recibidos": tags, "host": host}, 200
+    print(f"🟡 Color asignado: {border_color.upper()}")
+    return {"status": "ok", "tags_recibidos": tags, "host": host, "color": border_color}, 200
 
 if __name__ == "__main__":
     print("Flask escuchando en http://127.0.0.1:5006")
