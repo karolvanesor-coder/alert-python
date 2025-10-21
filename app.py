@@ -40,11 +40,13 @@ def datadog_webhook():
     host = data.get("host", "Desconocido")
     alert_type = str(data.get("alert_type", "alert")).lower()  # 👈 capturamos tipo de alerta
 
-    # Determinar color según tipo
+    # Determinar color y título según tipo
     if "warn" in alert_type:
         border_color = "yellow"
+        titulo = "🟡 ALERTA PREVENTIVA (WARNING)"
     else:
         border_color = "red"
+        titulo = "🔴 ALERTA CRÍTICA (ALERT)"
 
     # Normalizar tags
     if isinstance(raw_tags, str):
@@ -60,19 +62,23 @@ def datadog_webhook():
     if selected_tag:
         sound_file = ALERT_CONFIG[selected_tag]["sound"]
         gif_file = ALERT_CONFIG[selected_tag]["gif"]
-        message = f"🚨 {selected_tag}\nHost: {host}"
+        message = f"{titulo}\n🚨 {selected_tag}\nHost: {host}"
         print(f"🚨 Disparando alerta por TAG: {selected_tag} desde {host}")
     else:
         sound_file = DEFAULT_SOUND
         gif_file = DEFAULT_GIF
-        message = f"⚠️ Alerta por defecto\nHost: {host}"
+        message = f"{titulo}\n⚠️ Alerta por defecto\nHost: {host}"
         print(f"⚠️ Ningún tag coincide, alerta por defecto desde {host}")
 
     # Reproducir sonido
     threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
 
     # Mostrar popup con mensaje y color
-    threading.Thread(target=show_gif_popup, args=(gif_file, 6, message, border_color), daemon=True).start()
+    threading.Thread(
+        target=show_gif_popup,
+        args=(gif_file, 6, message, border_color),
+        daemon=True
+    ).start()
 
     print(f"🟡 Color asignado: {border_color.upper()}")
     return {"status": "ok", "tags_recibidos": tags, "host": host, "color": border_color}, 200
