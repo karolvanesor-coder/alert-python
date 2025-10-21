@@ -45,10 +45,12 @@ def datadog_webhook():
     if "warn" in alert_type:
         border_color = "yellow"
         titulo = "⚠️ ALERTA PREVENTIVA"
+        emoji = ""
         suffix = "-warn"  # sufijo para archivos preventivos
     else:
         border_color = "red"
         titulo = "🚨 ALERTA CRÍTICA"
+        emoji = ""
         suffix = ""  # usa archivos normales
 
     # Normalizar tags
