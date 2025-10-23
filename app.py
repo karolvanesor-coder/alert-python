@@ -85,9 +85,9 @@ def datadog_webhook():
         border_color = "yellow"
         sound_file = "./sound/alert-warn.mp3"
         gif_file = "./gif/warn.gif"
-        titulo = "⚠️ ALERTA PREVENTIVA DE DISCO"
+        titulo = "⚠️ ALERTA PREVENTIVA"
         emoji = "🟡"
-        message = ""
+        message = f"{titulo}\n{emoji} {selected_tag or 'SIN TAG'}\nHost: {host}"
         print("🟡 Alerta preventiva de DISCO detectada")
 
         # Enviar mensaje de WhatsApp Cloud API en hilo aparte
