@@ -30,7 +30,7 @@ DEFAULT_GIF = "./gif/alert.gif"
 # WhatsApp Cloud API
 WHATSAPP_TOKEN = "EAAWr2FNDoE4BP0j1kke6ouKD8jbZBL3sIRkXve1CbczxyO69n82GzfFhRvphD04WCKDlcENQJRR2GRuHsXEQlp4UKvVGWoptRexkEbKChymiBkNZAmfsjMh86SR1hFFOU182Y8vRAkX5zivTmnjkTI4jvJ3S6sDDz2dQjwwRE1pvV8xp4P6xn8JYfTTAZDZD"
 WHATSAPP_NUMBER_ID = "847870818407171"  # ID de tu número de WhatsApp Business
-WHATSAPP_TO_NUMBER = "573026298197"      # Número de destinatario (sin +)
+WHATSAPP_TO_NUMBER = "3026298197"      # Número de destinatario (sin +)
 
 # Mostrar popup
 def show_gif_popup(gif_path, duration=4, message="⚠️ Alerta sin mensaje", border_color="red"):
