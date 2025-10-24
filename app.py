@@ -38,6 +38,9 @@ def show_gif_popup(gif_path, duration=4, message="⚠️ Alerta sin mensaje", bo
 
 # Enviar mensaje por WhatsApp Cloud API
 def send_whatsapp_alert_api(message):
+    # Limpieza de mensaje para cumplir con reglas de Meta
+    clean_message = message.replace("\n", " ").replace("\t", " ").replace("  ", " ")
+    
     url = f"https://graph.facebook.com/v22.0/{WHATSAPP_NUMBER_ID}/messages"
     headers = {
         "Authorization": f"Bearer {WHATSAPP_TOKEN}",
@@ -48,9 +51,16 @@ def send_whatsapp_alert_api(message):
         "to": WHATSAPP_TO_NUMBER,
         "type": "template",
         "template": {
-            "name": "hello_world",   # Nombre de tu plantilla
+            "name": "hello_world",  # O tu plantilla personalizada
             "language": {"code": "en_US"},
-            "components": [{"type": "body", "parameters": [{"type": "text", "text": message}]}]
+            "components": [
+                {
+                    "type": "body",
+                    "parameters": [
+                        {"type": "text", "text": clean_message}
+                    ]
+                }
+            ]
         }
     }
     try:
