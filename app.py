@@ -4,43 +4,43 @@ import threading
 import subprocess
 import sys
 import requests
+import json
 
 app = Flask(__name__)
 
-# Configuración base para alertas críticas (rojas)
+# -------------------------------
+# ⚙️ Configuración de alertas
+# -------------------------------
 ALERT_CONFIG = {
-    "CPU": {
-        "sound": "./sound/alert.mp3",
-        "gif": "./gif/alert.gif"
-    },
-    "MEMORIA": {
-        "sound": "./sound/alert1.mp3",
-        "gif": "./gif/alert1.gif"
-    },
-    "DISCO": {
-        "sound": "./sound/alert2.mp3",
-        "gif": "./gif/alert2.gif"
-    }
+    "CPU": {"sound": "./sound/alert.mp3", "gif": "./gif/alert.gif"},
+    "MEMORIA": {"sound": "./sound/alert1.mp3", "gif": "./gif/alert1.gif"},
+    "DISCO": {"sound": "./sound/alert2.mp3", "gif": "./gif/alert2.gif"}
 }
 
-# Valores por defecto
 DEFAULT_SOUND = "./sound/alert.mp3"
 DEFAULT_GIF = "./gif/alert.gif"
 
-# WhatsApp Cloud API
-WHATSAPP_TOKEN = "EAAWr2FNDoE4BP0j1kke6ouKD8jbZBL3sIRkXve1CbczxyO69n82GzfFhRvphD04WCKDlcENQJRR2GRuHsXEQlp4UKvVGWoptRexkEbKChymiBkNZAmfsjMh86SR1hFFOU182Y8vRAkX5zivTmnjkTI4jvJ3S6sDDz2dQjwwRE1pvV8xp4P6xn8JYfTTAZDZD"
-WHATSAPP_NUMBER_ID = "847870818407171"  # ID de tu número de WhatsApp Business
-WHATSAPP_TO_NUMBER = "573026298197"      # Número de destinatario (sin +)
+# -------------------------------
+# 💬 Configuración WhatsApp Cloud API
+# -------------------------------
+WHATSAPP_TOKEN = "EAAWr2FNDoE4BP57XQoZCW13yQASCduGW4wFDuGyOAYlDBpLk64lA5Of695QZCJLUrTBe0COJpSLXZC9DqZARvt0LqpWN4SZA4gExzlkZCJ8nOHkcl80sIZAm1KDW7X6xeIP9g0YIXqftRMZChgt6ZAKfE4nxIzLHubnHJ8CAqya1qg4RHZBo60RQ640b0iGSyFowZDZD"
+WHATSAPP_NUMBER_ID = "847870818407171"
+WHATSAPP_TO_NUMBER = "573026298197"
 
-# Mostrar popup
+# -------------------------------
+# 🖼 Mostrar Popup
+# -------------------------------
 def show_gif_popup(gif_path, duration=4, message="⚠️ Alerta sin mensaje", border_color="red"):
-    subprocess.Popen([sys.executable, "./interface/popup.py", gif_path, str(duration), message, border_color])
+    try:
+        subprocess.Popen([sys.executable, "./interface/popup.py", gif_path, str(duration), message, border_color])
+    except Exception as e:
+        print("⚠️ Error al mostrar popup:", e)
 
-# Enviar mensaje por WhatsApp Cloud API
-def send_whatsapp_alert_api(message):
-    # Limpieza de mensaje para cumplir con reglas de Meta
-    clean_message = message.replace("\n", " ").replace("\t", " ").replace("  ", " ")
-    
+# -------------------------------
+# 📲 Enviar alerta por WhatsApp (plantilla)
+# -------------------------------
+def send_whatsapp_template(host_name):
+    """Envía una alerta preventiva usando plantilla aprobada"""
     url = f"https://graph.facebook.com/v22.0/{WHATSAPP_NUMBER_ID}/messages"
     headers = {
         "Authorization": f"Bearer {WHATSAPP_TOKEN}",
@@ -51,78 +51,73 @@ def send_whatsapp_alert_api(message):
         "to": WHATSAPP_TO_NUMBER,
         "type": "template",
         "template": {
-            "name": "hello_world",  # O tu plantilla personalizada
-            "language": {"code": "en_US"},
+            "name": "alerta_preventiva_disco",  
+            "language": {"code": "es_CO"},      
             "components": [
                 {
                     "type": "body",
                     "parameters": [
-                        {"type": "text", "text": clean_message}
+                        {
+                            "type": "text",
+                            "text": host_name,
+                            "parameter_name": "server_name"  #nombre de la variable en plantilla
+                        }
                     ]
                 }
             ]
         }
     }
+
     try:
         r = requests.post(url, headers=headers, json=payload)
         if r.status_code == 200:
-            print("✅ Mensaje enviado a WhatsApp correctamente")
+            print("✅ WhatsApp (plantilla) enviado correctamente")
         else:
-            print("⚠️ Error al enviar WhatsApp:", r.status_code, r.text)
+            print(f"⚠️ Error al enviar WhatsApp: {r.status_code} → {r.text}")
     except Exception as e:
-        print("❌ Error de conexión:", e)
+        print("❌ Error al conectar con WhatsApp:", e)
 
+# -------------------------------
+# 📡 Webhook de Datadog
+# -------------------------------
 @app.route("/datadog-webhook", methods=["POST"])
 def datadog_webhook():
-    data = request.json
-    print("📩 Webhook recibido:", data)
+    data = request.json or {}
+    print("\n📩 Webhook recibido:\n", json.dumps(data, indent=2, ensure_ascii=False))
 
-    raw_tags = data.get("tags", "")
+    raw_tags = data.get("tags", [])
     host = data.get("host", "Desconocido")
     alert_type = str(data.get("alert_type", "alert")).lower()
 
-    # Normalizar tags
-    if isinstance(raw_tags, str):
-        tags = [t.strip().upper() for t in raw_tags.split(",") if t.strip()]
-    else:
-        tags = [str(t).upper() for t in raw_tags]
-    print("✅ Tags procesados:", tags)
+    tags = [t.strip().upper() for t in raw_tags] if isinstance(raw_tags, list) else \
+           [t.strip().upper() for t in str(raw_tags).split(",") if t.strip()]
 
     selected_tag = next((tag for tag in tags if tag in ALERT_CONFIG), None)
 
-    # --- Lógica especial: solo DISCO tiene warning amarillo ---
+    # 🟡 Solo enviar WhatsApp para disco preventivo
     if selected_tag == "DISCO" and "warn" in alert_type:
         border_color = "yellow"
         sound_file = "./sound/alert-warn.mp3"
         gif_file = "./gif/warn.gif"
-        titulo = "⚠️ ALERTA PREVENTIVA"
-        emoji = "🟡"
-        message = f"{titulo}\n{emoji} {selected_tag or 'SIN TAG'}\nHost: {host}"
-        print("🟡 Alerta preventiva de DISCO detectada")
+        message = f"⚠️ ALERTA PREVENTIVA DE DISCO 🟡\nHost: {host}\nVerifica el espacio en disco lo antes posible."
 
-        # Enviar mensaje de WhatsApp Cloud API en hilo aparte
-        threading.Thread(target=send_whatsapp_alert_api, args=(message,), daemon=True).start()
+        print("🟡 Alerta preventiva detectada - enviando plantilla WhatsApp...")
+        threading.Thread(target=send_whatsapp_template, args=(host,), daemon=True).start()
     else:
         border_color = "red"
-        titulo = "🚨 ALERTA CRÍTICA"
-        emoji = "🔴"
-        if selected_tag:
-            sound_file = ALERT_CONFIG[selected_tag]["sound"]
-            gif_file = ALERT_CONFIG[selected_tag]["gif"]
-        else:
-            sound_file = DEFAULT_SOUND
-            gif_file = DEFAULT_GIF
-        message = f"{titulo}\n{emoji} {selected_tag or 'SIN TAG'}\nHost: {host}"
+        sound_file = ALERT_CONFIG.get(selected_tag, {}).get("sound", DEFAULT_SOUND)
+        gif_file = ALERT_CONFIG.get(selected_tag, {}).get("gif", DEFAULT_GIF)
+        message = f"🚨 ALERTA CRÍTICA 🔴\nTipo: {selected_tag or 'SIN TAG'}\nHost: {host}"
 
-    # Reproducir sonido
     threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
-
-    # Mostrar popup
     threading.Thread(target=show_gif_popup, args=(gif_file, 6, message, border_color), daemon=True).start()
 
-    print(f"🎵 Sonido: {sound_file} | 🎞 GIF: {gif_file} | 🎨 Color: {border_color}")
-    return {"status": "ok", "tags_recibidos": tags, "host": host, "color": border_color}, 200
+    return {"status": "ok", "tags": tags, "host": host}, 200
 
+# -------------------------------
+# 🚀 Inicio
+# -------------------------------
 if __name__ == "__main__":
-    print("Flask escuchando en http://127.0.0.1:5006")
-    app.run(port=5006, debug=True)
+    print("🚀 Flask escuchando en http://127.0.0.1:5006")
+    app.run(host="0.0.0.0", port=5006, debug=True)
+
