@@ -129,7 +129,7 @@ def datadog_webhook():
         border_color = "yellow"
         sound_file = "./sound/alert-warn.mp3"
         gif_file = "./gif/warn.gif"
-        message = f"⚠️ ALERTA PREVENTIVA DE DISCO 🟡\nHost: {host}\nVerifica el espacio en disco lo antes posible."
+        message = f"⚠️ ALERTA PREVENTIVA DE DISCO \nHost: {host}\nVerifica el espacio en disco lo antes posible."
 
         print("🟡 Alerta preventiva detectada - enviando plantilla WhatsApp...")
         threading.Thread(target=send_whatsapp_template, args=(host,), daemon=True).start()
@@ -141,7 +141,7 @@ def datadog_webhook():
         border_color = "red"
         sound_file = ALERT_CONFIG.get(selected_tag, {}).get("sound", DEFAULT_SOUND)
         gif_file = ALERT_CONFIG.get(selected_tag, {}).get("gif", DEFAULT_GIF)
-        message = f"🚨 ALERTA CRÍTICA 🔴\nTipo: {selected_tag or 'SIN TAG'}\nHost: {host}"
+        message = f"🚨 ALERTA CRÍTICA \nTipo: {selected_tag or 'SIN TAG'}\nHost: {host}"
 
     threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
     threading.Thread(target=show_gif_popup, args=(gif_file, 6, message, border_color), daemon=True).start()
