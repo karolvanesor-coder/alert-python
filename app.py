@@ -127,12 +127,21 @@ def datadog_webhook():
         threading.Thread(target=send_whatsapp_template, args=(host,), daemon=True).start()
         threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
 
-    # 🟠 Alerta naranja: RabbitMQ o DB
+     # 🟠 Alerta naranja: RabbitMQ o DB
     elif "ALERTDB" in tags or "ALERTMQ" in tags or "RABBITMQ" in title or "DATABASE" in title:
         border_color = "orange"
         sound_file = "./sound/alert-disponibilidad.mp3"
         gif_file = "./gif/alertdisponibilidad.gif"
-        message = f"🟠 ALERTA DE DISPONIBILIDAD \nHost: {host}\nTipo: {selected_tag or 'RabbitMQ/DB'}"
+
+        # 🔍 Mensaje personalizado según tipo
+        if "ALERTMQ" in tags or "RABBITMQ" in title:
+            tipo_alerta = "Consumidores por cola RabbitMQ"
+        elif "ALERTDB" in tags or "DATABASE" in title:
+            tipo_alerta = "Bloqueos por sesiones DB"
+        else:
+            tipo_alerta = "Servicio de disponibilidad"
+
+        message = f"🟠 ALERTA DE DISPONIBILIDAD\nHost: {host}\nTipo: {tipo_alerta}"
 
         print("🟠 Enviando Telegram para alerta naranja...")
         threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
