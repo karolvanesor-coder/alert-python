@@ -32,7 +32,10 @@ TELEGRAM_TOKEN = "8341737855:AAFRvmJIiLzKWl-Vzq1NhkzVvdtP544n8zo"
 TELEGRAM_CHAT_IDS = [
     "1515649395", #karol
     "399817462",  #marcos
-    "1928609594"  #alejandro
+    "1928609594", #alejandro
+    "533920258",  #fernando
+    "5987315848", #jhonatan
+    "5572263123"  #juan
     ]
 
 # -------------------------------
