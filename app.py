@@ -141,7 +141,7 @@ def datadog_webhook():
         else:
             tipo_alerta = "Servicio de disponibilidad"
 
-        message = f"🟠 ALERTA DE DISPONIBILIDAD\nHost: {host}\nTipo: {tipo_alerta}"
+        message = f"🟠 ALERTA DE DISPONIBILIDAD\nTipo: {tipo_alerta}"
 
         print("🟠 Enviando Telegram para alerta naranja...")
         threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
