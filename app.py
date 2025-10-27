@@ -14,7 +14,9 @@ app = Flask(__name__)
 ALERT_CONFIG = {
     "CPU": {"sound": "./sound/alert.mp3", "gif": "./gif/alert.gif"},
     "MEMORIA": {"sound": "./sound/alert1.mp3", "gif": "./gif/alert1.gif"},
-    "DISCO": {"sound": "./sound/alert2.mp3", "gif": "./gif/alert2.gif"}
+    "DISCO": {"sound": "./sound/alert2.mp3", "gif": "./gif/alert2.gif"},
+    "ALERTDB": {"sound": "./sound/alert-disponibilidad.mp3", "gif": "./gif/alertdisponibilidad.gif"},
+    "ALERTMQ": {"sound": "./sound/alert-disponibilidad.mp3", "gif": "./gif/alertdisponibilidad.gif"},
 }
 
 DEFAULT_SOUND = "./sound/alert.mp3"
@@ -30,8 +32,8 @@ WHATSAPP_TO_NUMBER = "573026298197"
 # 💬 Configuración Telegram Bot
 TELEGRAM_TOKEN = "8341737855:AAFRvmJIiLzKWl-Vzq1NhkzVvdtP544n8zo"
 TELEGRAM_CHAT_IDS = [
-    "-4983450099" #ID grupo telegram
-    ]
+    "-4983450099"  # ID del grupo de Telegram
+]
 
 # -------------------------------
 # 🖼 Mostrar Popup
@@ -57,17 +59,13 @@ def send_whatsapp_template(host_name):
         "to": WHATSAPP_TO_NUMBER,
         "type": "template",
         "template": {
-            "name": "alerta_preventiva_disco",  
-            "language": {"code": "es_CO"},      
+            "name": "alerta_preventiva_disco",
+            "language": {"code": "es_CO"},
             "components": [
                 {
                     "type": "body",
                     "parameters": [
-                        {
-                            "type": "text",
-                            "text": host_name,
-                            "parameter_name": "server_name"  #nombre de la variable en plantilla
-                        }
+                        {"type": "text", "text": host_name, "parameter_name": "server_name"}
                     ]
                 }
             ]
@@ -86,18 +84,11 @@ def send_whatsapp_template(host_name):
 # -------------------------------
 # 📩 Enviar alerta a Telegram
 # -------------------------------
-
-# nombre del bot wn telegram: alerta_preventiva_disco_bot 
-
 def send_telegram_message(message):
     """Envía mensaje al chat de Telegram"""
     for chat_id in TELEGRAM_CHAT_IDS:
         url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-        payload = {
-            "chat_id": chat_id,
-            "text": message,
-            "parse_mode": "Markdown"
-        }
+        payload = {"chat_id": chat_id, "text": message, "parse_mode": "Markdown"}
         try:
             r = requests.post(url, json=payload)
             if r.status_code == 200:
@@ -118,31 +109,42 @@ def datadog_webhook():
     raw_tags = data.get("tags", [])
     host = data.get("host", "Desconocido")
     alert_type = str(data.get("alert_type", "alert")).lower()
+    title = str(data.get("title", "")).upper()
 
     tags = [t.strip().upper() for t in raw_tags] if isinstance(raw_tags, list) else \
            [t.strip().upper() for t in str(raw_tags).split(",") if t.strip()]
 
     selected_tag = next((tag for tag in tags if tag in ALERT_CONFIG), None)
 
-    # 🟡 Solo enviar WhatsApp para disco preventivo
+    # 🟡 Alerta preventiva de disco (warning)
     if selected_tag == "DISCO" and "warn" in alert_type:
         border_color = "yellow"
         sound_file = "./sound/alert-warn.mp3"
         gif_file = "./gif/warn.gif"
         message = f"⚠️ ALERTA PREVENTIVA DE DISCO \nHost: {host}\nVerifica el espacio en disco lo antes posible."
 
-        print("🟡 Alerta preventiva detectada - enviando plantilla WhatsApp...")
+        print("🟡 Enviando WhatsApp y Telegram para alerta preventiva...")
         threading.Thread(target=send_whatsapp_template, args=(host,), daemon=True).start()
-
-        print("🟡 Alerta preventiva detectada - enviando plantilla Telegram...")
         threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
 
+    # 🟠 Alerta naranja: RabbitMQ o DB
+    elif "ALERTDB" in tags or "ALERTMQ" in tags or "RABBITMQ" in title or "DATABASE" in title:
+        border_color = "orange"
+        sound_file = "./sound/alert-disponibilidad.mp3"
+        gif_file = "./gif/alertdisponibilidad.gif"
+        message = f"🟠 ALERTA DE DISPONIBILIDAD \nHost: {host}\nTipo: {selected_tag or 'RabbitMQ/DB'}"
+
+        print("🟠 Enviando Telegram para alerta naranja...")
+        threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
+
+    # 🔴 Resto de alertas críticas
     else:
         border_color = "red"
         sound_file = ALERT_CONFIG.get(selected_tag, {}).get("sound", DEFAULT_SOUND)
         gif_file = ALERT_CONFIG.get(selected_tag, {}).get("gif", DEFAULT_GIF)
         message = f"🚨 ALERTA CRÍTICA \nTipo: {selected_tag or 'SIN TAG'}\nHost: {host}"
 
+    # Ejecutar sonido y popup
     threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
     threading.Thread(target=show_gif_popup, args=(gif_file, 6, message, border_color), daemon=True).start()
 
@@ -154,4 +156,3 @@ def datadog_webhook():
 if __name__ == "__main__":
     print("🚀 Flask escuchando en http://127.0.0.1:5006")
     app.run(host="0.0.0.0", port=5006, debug=True)
-
