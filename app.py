@@ -27,6 +27,10 @@ WHATSAPP_TOKEN = "EAAWr2FNDoE4BPylAk01jG7cvYSGSxirB26uCv03hhU6oLqtATASZBn05ZA5sQ
 WHATSAPP_NUMBER_ID = "847870818407171"
 WHATSAPP_TO_NUMBER = "573026298197"
 
+# 💬 Configuración Telegram Bot
+TELEGRAM_TOKEN = "8341737855:AAFRvmJIiLzKWl-Vzq1NhkzVvdtP544n8zo"
+TELEGRAM_CHAT_IDS = ["1515649395"]
+
 # -------------------------------
 # 🖼 Mostrar Popup
 # -------------------------------
@@ -78,6 +82,27 @@ def send_whatsapp_template(host_name):
         print("❌ Error al conectar con WhatsApp:", e)
 
 # -------------------------------
+# 📩 Enviar alerta a Telegram
+# -------------------------------
+def send_telegram_message(message):
+    """Envía mensaje al chat de Telegram"""
+    for chat_id in TELEGRAM_CHAT_IDS:
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+        payload = {
+            "chat_id": chat_id,
+            "text": message,
+            "parse_mode": "Markdown"
+        }
+        try:
+            r = requests.post(url, json=payload)
+            if r.status_code == 200:
+                print(f"✅ Telegram enviado correctamente a {chat_id}")
+            else:
+                print(f"⚠️ Error al enviar Telegram a {chat_id}: {r.status_code} → {r.text}")
+        except Exception as e:
+            print("❌ Error al conectar con Telegram:", e)
+
+# -------------------------------
 # 📡 Webhook de Datadog
 # -------------------------------
 @app.route("/datadog-webhook", methods=["POST"])
@@ -103,6 +128,10 @@ def datadog_webhook():
 
         print("🟡 Alerta preventiva detectada - enviando plantilla WhatsApp...")
         threading.Thread(target=send_whatsapp_template, args=(host,), daemon=True).start()
+
+        print("🟡 Alerta preventiva detectada - enviando plantilla Telegram...")
+        threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
+
     else:
         border_color = "red"
         sound_file = ALERT_CONFIG.get(selected_tag, {}).get("sound", DEFAULT_SOUND)
