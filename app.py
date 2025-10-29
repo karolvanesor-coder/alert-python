@@ -140,12 +140,26 @@ def datadog_webhook():
 
     # 🟣 Alerta morada: Bloqueos por sesiones DB
     elif "ALERTDB" in tags or "DATABASE" in title:
-        border_color = "purple"  
-        sound_file = "./sound/alertdb.mp3"  
-        gif_file = "./gif/alertdb.gif"       
+        border_color = "purple"
+        sound_file = "./sound/alertdb.mp3"
+        gif_file = "./gif/alertdb.gif"
         tipo_alerta = "Bloqueos por sesiones DB"
 
-        message = f"🟣 ALERTA BLOQUEOS DB\nTipo: {tipo_alerta}"
+        # Detectar país o instancia por el hostname
+        pais = "Desconocido"
+        if "ecuador" in host.lower():
+            pais = "🇪🇨 Ecuador"
+        elif "panama" in host.lower():
+            pais = "🇵🇦 Panamá"
+        elif "colombia" in host.lower():
+            pais = "🇨🇴 Colombia"
+        elif "peru" in host.lower():
+            pais = "🇵🇪 Perú"
+        elif "chile" in host.lower():
+            pais = "🇨🇱 Chile"
+
+        message = f"🟣 *ALERTA BLOQUEOS DB*\n📍 Instancia: {host}\n🌎 País: {pais}\n⚙️ Tipo: {tipo_alerta}"
+
         print("🟣 Enviando Telegram para alerta de bloqueos DB...")
         threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
 
