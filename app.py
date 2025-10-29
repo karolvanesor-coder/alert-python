@@ -138,30 +138,56 @@ def datadog_webhook():
         print("🟠 Enviando Telegram para alerta RabbitMQ...")
         threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
 
-    # 🟣 Alerta morada: Bloqueos por sesiones DB
-    elif "ALERTDB" in tags or "DATABASE" in title:
-        border_color = "purple"
-        sound_file = "./sound/alertdb.mp3"
-        gif_file = "./gif/alertdb.gif"
-        tipo_alerta = "Bloqueos por sesiones DB"
+# 🟣 Alerta morada: Bloqueos por sesiones DB
+elif "ALERTDB" in tags or "DATABASE" in title:
+    border_color = "purple"
+    sound_file = "./sound/alertdb.mp3"
+    gif_file = "./gif/alertdb.gif"
+    tipo_alerta = "Bloqueos por sesiones DB"
 
-        # Detectar país o instancia por el hostname
-        pais = "Desconocido"
-        if "ecuador" in host.lower():
-            pais = "🇪🇨 Ecuador"
-        elif "panama" in host.lower():
-            pais = "🇵🇦 Panamá"
-        elif "colombia" in host.lower():
-            pais = "🇨🇴 Colombia"
-        elif "peru" in host.lower():
-            pais = "🇵🇪 Perú"
-        elif "chile" in host.lower():
-            pais = "🇨🇱 Chile"
+    # 🧩 Extraer la instancia del JSON del webhook
+    group_data = data.get("group", "") or data.get("event", {}).get("group", "")
+    instancia = str(group_data).replace("database_hostname:", "").strip() or "Desconocido"
 
-        message = f"🟣 *ALERTA BLOQUEOS DB*\n📍 Instancia: {host}\n🌎 País: {pais}\n⚙️ Tipo: {tipo_alerta}"
+    # 🌎 Detección del país según la instancia
+    if "colombia" in instancia.lower():
+        pais = "🇨🇴 Colombia"
+    elif "mexico" in instancia.lower():
+        pais = "🇲🇽 México"
+    elif "chile" in instancia.lower():
+        pais = "🇨🇱 Chile"
+    elif "ecuador" in instancia.lower():
+        pais = "🇪🇨 Ecuador"
+    elif "panama" in instancia.lower():
+        pais = "🇵🇦 Panamá"
+    elif "paraguay" in instancia.lower():
+        pais = "🇵🇾 Paraguay"
+    elif "peru" in instancia.lower():
+        pais = "🇵🇪 Perú"
+    elif "produit" in instancia.lower():
+        pais = "🏭 Produit"
+    else:
+        pais = "🌍 Desconocido"
 
-        print("🟣 Enviando Telegram para alerta de bloqueos DB...")
-        threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
+    # 🧠 Detectar si es un nodo especial (reader, ms, etc.)
+    extra_info = ""
+    if "reader" in instancia.lower():
+        extra_info = "🔹 *Nodo Reader*"
+    elif "ms" in instancia.lower():
+        extra_info = "🔹 *Microservicio*"
+
+    # 💬 Mensaje Telegram
+    message = (
+        f"🟣 *ALERTA BLOQUEOS DB*\n"
+        f"📍 *Instancia:* `{instancia}`\n"
+        f"🌎 *País:* {pais}\n"
+        f"{extra_info}\n"
+        f"⚙️ *Tipo:* {tipo_alerta}"
+    )
+
+    print("🟣 Enviando Telegram para alerta de bloqueos DB...")
+    threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
+
 
     # 🔴 Resto de alertas críticas
     else:
