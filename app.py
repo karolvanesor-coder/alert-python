@@ -15,7 +15,7 @@ ALERT_CONFIG = {
     "CPU": {"sound": "./sound/alert.mp3", "gif": "./gif/alert.gif"},
     "MEMORIA": {"sound": "./sound/alert1.mp3", "gif": "./gif/alert1.gif"},
     "DISCO": {"sound": "./sound/alert2.mp3", "gif": "./gif/alert2.gif"},
-    "ALERTDB": {"sound": "./sound/alert-disponibilidad.mp3", "gif": "./gif/alertdisponibilidad.gif"},
+    "ALERTDB": {"sound": "./sound/alertdb.mp3", "gif": "./gif/alertdb.gif"},
     "ALERTMQ": {"sound": "./sound/alert-disponibilidad.mp3", "gif": "./gif/alertdisponibilidad.gif"},
 }
 
@@ -127,23 +127,26 @@ def datadog_webhook():
         threading.Thread(target=send_whatsapp_template, args=(host,), daemon=True).start()
         threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
 
-     # 🟠 Alerta naranja: RabbitMQ o DB
-    elif "ALERTDB" in tags or "ALERTMQ" in tags or "RABBITMQ" in title or "DATABASE" in title:
+     # 🟠 Alerta naranja: RabbitMQ
+    elif "ALERTMQ" in tags or "RABBITMQ" in title:
         border_color = "orange"
         sound_file = "./sound/alert-disponibilidad.mp3"
         gif_file = "./gif/alertdisponibilidad.gif"
+        tipo_alerta = "Consumidores por cola RabbitMQ"
 
-        # 🔍 Mensaje personalizado según tipo
-        if "ALERTMQ" in tags or "RABBITMQ" in title:
-            tipo_alerta = "Consumidores por cola RabbitMQ"
-        elif "ALERTDB" in tags or "DATABASE" in title:
-            tipo_alerta = "Bloqueos por sesiones DB"
-        else:
-            tipo_alerta = "Servicio de disponibilidad"
+        message = f"🟠 ALERTA RABBITMQ\nTipo: {tipo_alerta}"
+        print("🟠 Enviando Telegram para alerta RabbitMQ...")
+        threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
 
-        message = f"🟠 ALERTA DE DISPONIBILIDAD\nTipo: {tipo_alerta}"
+    # 🟣 Alerta morada: Bloqueos por sesiones DB
+    elif "ALERTDB" in tags or "DATABASE" in title:
+        border_color = "purple"  
+        sound_file = "./sound/alertdb.mp3"  
+        gif_file = "./gif/alertdb.gif"       
+        tipo_alerta = "Bloqueos por sesiones DB"
 
-        print("🟠 Enviando Telegram para alerta naranja...")
+        message = f"🟣 ALERTA BLOQUEOS DB\nTipo: {tipo_alerta}"
+        print("🟣 Enviando Telegram para alerta de bloqueos DB...")
         threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
 
     # 🔴 Resto de alertas críticas
