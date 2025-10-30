@@ -129,56 +129,56 @@ def datadog_webhook():
 
     # 🟠 Alerta naranja: RabbitMQ (Consumidores por cola)
     elif "ALERTMQ" in tags or "RABBITMQ" in title:
-    import re, textwrap
+        import re, textwrap
 
-    border_color = "orange"
-    sound_file = "./sound/alert-disponibilidad.mp3"
-    gif_file = "./gif/alertdisponibilidad.gif"
-    tipo_alerta = "Consumidores por cola RabbitMQ"
+        border_color = "orange"
+        sound_file = "./sound/alert-disponibilidad.mp3"
+        gif_file = "./gif/alertdisponibilidad.gif"
+        tipo_alerta = "Consumidores por cola RabbitMQ"
 
-    # 🧩 Obtener datos del webhook
-    event = data.get("event", {})
-    group = (
-        event.get("group")
-        or data.get("group")
-        or data.get("alert_scope")
-        or data.get("alert_metric")
-        or ""
-    )
-    title = event.get("title", "") or data.get("title", "")
+        # 🧩 Obtener datos del webhook
+        event = data.get("event", {})
+        group = (
+            event.get("group")
+            or data.get("group")
+            or data.get("alert_scope")
+            or data.get("alert_metric")
+            or ""
+        )
+        title = event.get("title", "") or data.get("title", "")
 
-    print(f"🔍 DEBUG group recibido: {group}")  # 👀 para verificar qué llega desde Datadog
+        print(f"🔍 DEBUG group recibido: {group}")  # 👀 para verificar qué llega desde Datadog
 
-    # 🔍 Buscar nombre de la cola (ejemplo: rabbitmq_queue:aliveness-test)
-    match = re.search(r"rabbitmq_queue[:=]([\w\-\._]+)", str(group))
-    if match:
-        queue_name = match.group(1)
-    else:
-        queue_name = "Desconocido"
+        # 🔍 Buscar nombre de la cola (ejemplo: rabbitmq_queue:aliveness-test)
+        match = re.search(r"rabbitmq_queue[:=]([\w\-\._]+)", str(group))
+        if match:
+            queue_name = match.group(1)
+        else:
+            queue_name = "Desconocido"
 
-    # 🧾 Construir mensaje final
-    message = (
-        f"🟠 ALERTA RABBITMQ\n"
-        f"📦 Cola: {queue_name}\n"
-        f"⚙️ Tipo: {tipo_alerta}\n"
-        f"📉 Posible falta de consumidores"
-    )
+        # 🧾 Construir mensaje final
+        message = (
+            f"🟠 ALERTA RABBITMQ\n"
+            f"📦 Cola: {queue_name}\n"
+            f"⚙️ Tipo: {tipo_alerta}\n"
+            f"📉 Posible falta de consumidores"
+        )
 
-    # 💡 Evitar que se desborde el texto
-    message_wrapped = "\n".join(textwrap.wrap(message, width=60))
+        # 💡 Evitar que se desborde el texto
+        message_wrapped = "\n".join(textwrap.wrap(message, width=60))
 
-    # 🚀 Enviar alerta por Telegram + popup
-    print(f"🟠 Enviando alerta RabbitMQ para cola: {queue_name}...")
-    threading.Thread(
-        target=send_telegram_message,
-        args=(message_wrapped,),
-        daemon=True
-    ).start()
-    threading.Thread(
-        target=show_gif_popup,
-        args=(gif_file, 6, message_wrapped, border_color),
-        daemon=True
-    ).start()
+        # 🚀 Enviar alerta por Telegram + popup
+        print(f"🟠 Enviando alerta RabbitMQ para cola: {queue_name}...")
+        threading.Thread(
+            target=send_telegram_message,
+            args=(message_wrapped,),
+            daemon=True
+        ).start()
+        threading.Thread(
+            target=show_gif_popup,
+            args=(gif_file, 6, message_wrapped, border_color),
+            daemon=True
+        ).start()
 
     # 🟣 Alerta morada: Bloqueos por sesiones DB
     elif "ALERTDB" in tags or "DATABASE" in title:
