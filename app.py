@@ -147,25 +147,39 @@ def datadog_webhook():
 
         # Capturar datos desde el webhook
         event = data.get("event", {})
-        group = event.get("group", "")
-        title = event.get("title", "")
+        group = event.get("group", "") or data.get("group", "")
+        title = event.get("title", "") or data.get("title", "")
 
-        # Buscar host dentro del group o del title
         import re
+
+        # Extraer hostname de la cadena del group o del title
         hostname = "Desconocido"
-
-        # Buscar algo que parezca un host de RDS
-        match = re.search(r"[\w-]+\.cluster[\w\.-]+\.amazonaws\.com", group)
+        match = re.search(r"([\w-]+\.cluster[\w\.-]+\.amazonaws\.com)", group)
         if not match:
-            match = re.search(r"[\w-]+\.cluster[\w\.-]+\.amazonaws\.com", title)
+            match = re.search(r"([\w-]+\.cluster[\w\.-]+\.amazonaws\.com)", title)
         if match:
-            hostname = match.group(0)
+            hostname = match.group(1)
 
-        # Armar mensaje final
+        # Mapear país según el nombre del host
+        country_map = {
+            "colombia": "🇨🇴 Colombia",
+            "mexico": "🇲🇽 México",
+            "chile": "🇨🇱 Chile",
+            "ecuador": "🇪🇨 Ecuador",
+            "panama": "🇵🇦 Panamá",
+            "paraguay": "🇵🇾 Paraguay",
+            "peru": "🇵🇪 Perú",
+            "produit": "🏭 Producción General"
+        }
+
+        pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "🌍 País no identificado")
+
+        # Construir mensaje
         message = (
-            f"🟣 ALERTA BLOQUEOS DB\n"
-            f" Host: {hostname}\n"
-            f" Tipo: {tipo_alerta}"
+            f"🟣 *ALERTA BLOQUEOS DB*\n"
+            f" *País:* {pais_detectado}\n"
+            f" *Host:* {hostname}\n"
+            f" *Tipo:* {tipo_alerta}"
         )
 
         print("🟣 Enviando Telegram para alerta de bloqueos DB...")
