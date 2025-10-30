@@ -140,6 +140,8 @@ def datadog_webhook():
 
     # 🟣 Alerta morada: Bloqueos por sesiones DB
     elif "ALERTDB" in tags or "DATABASE" in title:
+        import re, textwrap
+
         border_color = "purple"
         sound_file = "./sound/alertdb.mp3"
         gif_file = "./gif/alertdb.gif"
@@ -149,8 +151,6 @@ def datadog_webhook():
         event = data.get("event", {})
         group = event.get("group", "") or data.get("group", "")
         title = event.get("title", "") or data.get("title", "")
-
-        import re
 
         # Extraer hostname de la cadena del group o del title
         hostname = "Desconocido"
@@ -174,16 +174,20 @@ def datadog_webhook():
 
         pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "🌍 País no identificado")
 
-        # Construir mensaje
+        # Construir mensaje base
         message = (
-            f"🟣 *ALERTA BLOQUEOS DB*\n"
-            f" *País:* {pais_detectado}\n"
-            f" *Host:* {hostname}\n"
-            f" *Tipo:* {tipo_alerta}"
+            f"🟣 ALERTA BLOQUEOS DB\n"
+            f"🌎 País: {pais_detectado}\n"
+            f"🖥️ Host: {hostname}\n"
+            f"💾 Tipo: {tipo_alerta}"
         )
 
+        # 💡 Ajustar texto a 60 caracteres por línea para evitar desbordes
+        message_wrapped = "\n".join(textwrap.wrap(message, width=60))
+
         print("🟣 Enviando Telegram para alerta de bloqueos DB...")
-        threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
+        threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+        threading.Thread(target=show_gif_popup, args=(gif_file, 6, message_wrapped, border_color), daemon=True).start()
 
     # 🔴 Resto de alertas críticas
     else:
