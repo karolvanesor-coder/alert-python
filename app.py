@@ -127,8 +127,8 @@ def datadog_webhook():
         threading.Thread(target=send_whatsapp_template, args=(host,), daemon=True).start()
         threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
 
-    # 🟠 Alerta naranja: RabbitMQ (Consumidores por cola)
-    elif "alertmq" in tags or "rabbitmq" in title:
+        # 🟠 Alerta naranja: RabbitMQ (Consumidores por cola)
+    elif "alertmq" in tags.lower() or "rabbitmq" in title.lower():
         import re, textwrap
 
         border_color = "orange"
@@ -145,20 +145,23 @@ def datadog_webhook():
             or data.get("alert_metric")
             or ""
         )
-        raw_tags = data.get("tags", "")
+        raw_tags = str(data.get("tags", ""))
+        raw_host = str(data.get("host", "")).strip()
 
-        # 🔍 Buscar "rabbitmq_queue:xxxxx" en group o tags
-        match = re.search(r"rabbitmq_queue[:=]([\w\-\._]+)", str(group))
+        # 🔍 Buscar "rabbitmq_queue:xxxxx" en group, host o tags
+        match = re.search(r"rabbitmq_queue[:=]([\w\-\._]+)", group)
         if not match:
-            match = re.search(r"rabbitmq_queue[:=]([\w\-\._]+)", str(raw_tags))
+            match = re.search(r"rabbitmq_queue[:=]([\w\-\._]+)", raw_host)
+        if not match:
+            match = re.search(r"rabbitmq_queue[:=]([\w\-\._]+)", raw_tags)
 
         if match:
-            queue_name = match.group(1)  # ejemplo: logistic-overcost-co
+            queue_name = match.group(1)  # ejemplo: dropi-wms-notify-status
         else:
             queue_name = "Desconocido"
 
-        # ✅ Mostrar el nombre de la cola también como host
-        host = queue_name
+        # ✅ Definir host visible: si Datadog no lo manda, usamos la cola
+        host = raw_host if raw_host else queue_name
 
         # 🧾 Construir mensaje final
         message = (
@@ -169,10 +172,10 @@ def datadog_webhook():
             f"📉 Posible falta de consumidores"
         )
 
-        # 💡 Evitar desbordes de texto
+        # 💡 Ajuste de texto para pantallas
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
 
-        # 🚀 Enviar alerta por Telegram + popup
+        # 🚀 Enviar alerta
         print(f"🟠 Enviando alerta RabbitMQ para cola: {queue_name} (host: {host})...")
         threading.Thread(
             target=send_telegram_message,
