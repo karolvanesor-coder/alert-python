@@ -152,8 +152,7 @@ def datadog_webhook():
         message = (
             f"🟠 ALERTA RABBITMQ\n"
             f"📦 Cola: {queue_name}\n"
-            f"⚙️ Tipo: {tipo_alerta}\n"
-            f"📉 Posible falta de consumidores"
+            f"📉 Tipo: {tipo_alerta}\n"
         )
 
         # 💡 Evitar que se desborde el texto en pantalla
