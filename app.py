@@ -152,7 +152,7 @@ def datadog_webhook():
         group = event.get("group", "") or data.get("group", "")
         title = event.get("title", "") or data.get("title", "")
 
-        # Extraer hostname de la cadena del group o del title
+        # Extraer hostname
         hostname = "Desconocido"
         match = re.search(r"([\w-]+\.cluster[\w\.-]+\.amazonaws\.com)", group)
         if not match:
@@ -160,7 +160,7 @@ def datadog_webhook():
         if match:
             hostname = match.group(1)
 
-        # Mapear país según el nombre del host
+        # Mapear país
         country_map = {
             "colombia": "🇨🇴 Colombia",
             "mexico": "🇲🇽 México",
@@ -174,16 +174,23 @@ def datadog_webhook():
 
         pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "🌍 País no identificado")
 
-        # Construir mensaje base
-        message = (
-            f"🟣 ALERTA BLOQUEOS DB\n"
-            f"🌎 País: {pais_detectado}\n"
-            f"🖥️ Host: {hostname}\n"
-            f"💾 Tipo: {tipo_alerta}"
-        )
+        # 🔹 Cortar el hostname si es demasiado largo (cada 45 caracteres)
+        wrapped_host = "\n".join(textwrap.wrap(hostname, width=45))
 
-        # 💡 Ajustar texto a 60 caracteres por línea para evitar desbordes
-        message_wrapped = "\n".join(textwrap.wrap(message, width=60))
+        # Construir mensaje con formato y límites por línea
+        message_lines = [
+            "🟣 ALERTA BLOQUEOS DB",
+            f"🌎 País: {pais_detectado}",
+            f"🖥️ Host:\n{wrapped_host}",
+            f"💾 Tipo: {tipo_alerta}"
+        ]
+        message = "\n".join(message_lines)
+
+        # 💡 Limitar cada línea del mensaje completo a 60 caracteres
+        message_wrapped = "\n".join(
+            line if len(line) <= 60 else "\n".join(textwrap.wrap(line, width=60))
+            for line in message.splitlines()
+        )
 
         print("🟣 Enviando Telegram para alerta de bloqueos DB...")
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
