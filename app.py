@@ -172,7 +172,6 @@ elif "ALERTMQ" in tags or "RABBITMQ" in title:
     threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
     threading.Thread(target=show_gif_popup, args=(gif_file, 6, message_wrapped, border_color), daemon=True).start()
 
-
     # 🟣 Alerta morada: Bloqueos por sesiones DB
     elif "ALERTDB" in tags or "DATABASE" in title:
         import re, textwrap
