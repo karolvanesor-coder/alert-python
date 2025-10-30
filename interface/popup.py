@@ -1,10 +1,10 @@
 import sys
 import random
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout
-from PyQt5.QtGui import QMovie, QPainter, QColor, QPen, QFont
+from PyQt5.QtGui import QMovie, QPainter, QColor, QPen, QFont, QFontMetrics
 from PyQt5.QtCore import Qt, QTimer, QPointF
 
-# ⚡ Clase chispa
+# ⚡ Clase chispa decorativa
 class Spark:
     def __init__(self, x, y):
         self.pos = QPointF(x, y)
@@ -20,7 +20,7 @@ class Spark:
         self.color.setAlpha(alpha)
         return self.life > 0
 
-# 📺 Popup con GIF + borde + chispas
+# 📺 Popup con GIF + chispas
 class GifWithSparks(QWidget):
     def __init__(self, gif_path, duration,
                  width, height,
@@ -33,6 +33,7 @@ class GifWithSparks(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)
         layout.setSpacing(0)
+
         self.gif_label = QLabel()
         self.movie = QMovie(gif_path)
         self.movie.setScaledSize(self.size())
@@ -85,33 +86,49 @@ class GifWithSparks(QWidget):
             painter.setBrush(spark.color)
             painter.drawEllipse(spark.pos, spark.size, spark.size)
 
-# 📝 Ventana de mensaje
+# 📝 Popup de mensaje con ajuste dinámico
 class MessagePopup(QWidget):
     def __init__(self, message, duration, width, height):
         super().__init__()
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.setStyleSheet("background-color: black; border-radius: 20px;")
-        self.resize(width, height)
+        self.init_ui(message, duration, width, height)
+
+    def init_ui(self, message, duration, width, height):
         layout = QVBoxLayout(self)
-        text_label = QLabel(message)
-        text_label.setFont(QFont("Arial", 20, QFont.Bold))
-        text_label.setStyleSheet("color: white; background: transparent;")
-        text_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(text_label)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(10)
+
+        label = QLabel(message)
+        label.setFont(QFont("Arial", 18, QFont.Bold))
+        label.setStyleSheet("color: white; background: transparent;")
+        label.setWordWrap(True)
+        label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label)
+
+        # 🧠 Ajuste dinámico del alto del cuadro al texto
+        fm = QFontMetrics(label.font())
+        text_height = fm.boundingRect(0, 0, width - 50, 0, Qt.TextWordWrap, message).height()
+        adjusted_height = min(max(150, text_height + 80), height)
+        self.resize(width, adjusted_height)
+
+        # 🕐 Cierre automático
         QTimer.singleShot(duration * 1000, self.close)
 
+# 🚀 Ejecución principal
 if __name__ == "__main__":
     gif_path = sys.argv[1]
     duration = int(sys.argv[2])
     message = sys.argv[3] if len(sys.argv) > 3 else "⚠️ Alerta"
-    border_color = sys.argv[4] if len(sys.argv) > 4 else "red"  # 🟡 nuevo argumento
+    border_color = sys.argv[4] if len(sys.argv) > 4 else "red"
 
     app = QApplication([])
     screen = app.primaryScreen().geometry()
+
     gif_width = int(screen.width() * 0.7)
     gif_height = int(screen.height() * 0.5)
     msg_width = gif_width + 30
-    msg_height = int(screen.height() * 0.15)
+    msg_height = int(screen.height() * 0.2)
 
     gif_popup = GifWithSparks(gif_path, duration, gif_width, gif_height, border_color=QColor(border_color))
     gif_x = (screen.width() - gif_width) // 2
