@@ -141,6 +141,7 @@ def datadog_webhook():
     # 🟣 Alerta morada: Bloqueos por sesiones DB
     elif "ALERTDB" in tags or "DATABASE" in title:
         import re, textwrap
+        from time import time
 
         border_color = "purple"
         sound_file = "./sound/alertdb.mp3"
@@ -149,10 +150,15 @@ def datadog_webhook():
 
         # Capturar datos desde el webhook
         event = data.get("event", {})
-        group = event.get("group", "") or data.get("group", "")
-        title = event.get("title", "") or data.get("title", "")
+        group = event.get("group", "")
+        title = event.get("title", "")
 
-        # Extraer hostname de la cadena del group o del title
+        # Ignorar notificaciones de prueba
+        if "test notifications" in str(title).lower() or "test notifications" in str(group).lower():
+            print("⚪ Ignorando notificación de prueba de Datadog.")
+            return
+
+        # Extraer hostname
         hostname = "Desconocido"
         match = re.search(r"([\w-]+\.cluster[\w\.-]+\.amazonaws\.com)", group)
         if not match:
@@ -160,7 +166,18 @@ def datadog_webhook():
         if match:
             hostname = match.group(1)
 
-        # Mapear país según el nombre del host
+        # Evitar duplicados inmediatos
+        global last_db_alert, last_db_time
+        if 'last_db_alert' not in globals():
+            last_db_alert, last_db_time = None, 0
+
+        if hostname == last_db_alert and time() - last_db_time < 10:
+            print("⚪ Alerta DB ignorada (duplicada en menos de 10s).")
+            return
+
+        last_db_alert, last_db_time = hostname, time()
+
+        # Mapear país
         country_map = {
             "colombia": "🇨🇴 Colombia",
             "mexico": "🇲🇽 México",
@@ -174,7 +191,7 @@ def datadog_webhook():
 
         pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "🌍 País no identificado")
 
-        # Construir mensaje base
+        # Construir mensaje formateado
         message = (
             f"🟣 ALERTA BLOQUEOS DB\n"
             f"🌎 País: {pais_detectado}\n"
@@ -182,7 +199,6 @@ def datadog_webhook():
             f"💾 Tipo: {tipo_alerta}"
         )
 
-        # 💡 Ajustar texto a 60 caracteres por línea para evitar desbordes
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
 
         print("🟣 Enviando Telegram para alerta de bloqueos DB...")
