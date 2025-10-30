@@ -127,66 +127,16 @@ def datadog_webhook():
         threading.Thread(target=send_whatsapp_template, args=(host,), daemon=True).start()
         threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
 
-        # 🟠 Alerta naranja: RabbitMQ (Consumidores por cola)
-    elif "alertmq" in tags.lower() or "rabbitmq" in title.lower():
-        import re, textwrap
-
+    # 🟠 Alerta naranja: RabbitMQ
+    elif "ALERTMQ" in tags or "RABBITMQ" in title:
         border_color = "orange"
         sound_file = "./sound/alert-disponibilidad.mp3"
         gif_file = "./gif/alertdisponibilidad.gif"
         tipo_alerta = "Consumidores por cola RabbitMQ"
 
-        # 🧩 Obtener datos del webhook
-        event = data.get("event", {})
-        group = (
-            event.get("group")
-            or data.get("group")
-            or data.get("alert_scope")
-            or data.get("alert_metric")
-            or ""
-        )
-        raw_tags = str(data.get("tags", ""))
-        raw_host = str(data.get("host", "")).strip()
-
-        # 🔍 Buscar "rabbitmq_queue:xxxxx" en group, host o tags
-        match = re.search(r"rabbitmq_queue[:=]([\w\-\._]+)", group)
-        if not match:
-            match = re.search(r"rabbitmq_queue[:=]([\w\-\._]+)", raw_host)
-        if not match:
-            match = re.search(r"rabbitmq_queue[:=]([\w\-\._]+)", raw_tags)
-
-        if match:
-            queue_name = match.group(1)  # ejemplo: dropi-wms-notify-status
-        else:
-            queue_name = "Desconocido"
-
-        # ✅ Definir host visible: si Datadog no lo manda, usamos la cola
-        host = raw_host if raw_host else queue_name
-
-        # 🧾 Construir mensaje final
-        message = (
-            f"🟠 ALERTA RABBITMQ\n"
-            f"📦 Cola: {queue_name}\n"
-            f"🖥️ Host: {host}\n"
-            f"⚙️ Tipo: {tipo_alerta}\n"
-            f"📉 Posible falta de consumidores"
-        )
-
-        # 💡 Ajuste de texto para pantallas
-        message_wrapped = "\n".join(textwrap.wrap(message, width=60))
-
-        # 🚀 Enviar alerta
-        print(f"🟠 Enviando alerta RabbitMQ para cola: {queue_name} (host: {host})...")
-        threading.Thread(
-            target=send_telegram_message,
-            args=(message_wrapped,),
-            daemon=True
-        ).start()
-        threading.Thread(
-            target=show_gif_popup,
-            args=(gif_file, 6, message_wrapped, border_color),
-            daemon=True
-        ).start()
+        message = f"🟠 ALERTA RABBITMQ\nTipo: {tipo_alerta}"
+        print("🟠 Enviando Telegram para alerta RabbitMQ...")
+        threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
 
     # 🟣 Alerta morada: Bloqueos por sesiones DB
     elif "ALERTDB" in tags or "DATABASE" in title:
