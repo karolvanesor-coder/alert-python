@@ -127,16 +127,65 @@ def datadog_webhook():
         threading.Thread(target=send_whatsapp_template, args=(host,), daemon=True).start()
         threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
 
-     # 🟠 Alerta naranja: RabbitMQ
+    # 🟥 ALERTA RABBITMQ - Monitoreo de consumidores por cola
     elif "ALERTMQ" in tags or "RABBITMQ" in title:
-        border_color = "orange"
-        sound_file = "./sound/alert-disponibilidad.mp3"
-        gif_file = "./gif/alertdisponibilidad.gif"
+    import re, textwrap
+
+    # Configuración base
+    event = data.get("event", {})
+    group = event.get("group", "") or data.get("group", "")
+    title = event.get("title", "") or data.get("title", "")
+    alert_message = event.get("text", "") or data.get("text", "")
+
+    # 🔍 Buscar todas las colas y sus consumidores (Datadog agrupa por rabbitmq_queue)
+    pattern = re.compile(r"rabbitmq_queue[:=]([\w\-\._]+).*?(\d+)", re.DOTALL)
+    matches = pattern.findall(alert_message)
+
+    # Si no se detectan colas, intentar con group o title
+    if not matches and group:
+        match_single = re.search(r"rabbitmq_queue[:=]([\w\-\._]+)", group)
+        if match_single:
+            matches = [(match_single.group(1), "0")]
+
+    if not matches:
+        print("⚠️ No se detectaron colas en la alerta RabbitMQ.")
+        return
+
+    # Procesar cada cola con sus consumidores
+    for queue_name, consumers in matches:
+        consumers = int(consumers)
         tipo_alerta = "Consumidores por cola RabbitMQ"
 
-        message = f"🟠 ALERTA RABBITMQ\nTipo: {tipo_alerta}"
-        print("🟠 Enviando Telegram para alerta RabbitMQ...")
-        threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
+        # Determinar color y mensaje según severidad
+        if consumers == 0:
+            border_color = "red"
+            emoji = "🔴"
+            estado = "SIN CONSUMIDORES (CRÍTICO)"
+            sound_file = "./sound/alerta-critica.mp3"
+            gif_file = "./gif/alertcritica.gif"
+        elif consumers == 1:
+            border_color = "orange"
+            emoji = "🟠"
+            estado = "Solo 1 consumidor (Advertencia)"
+            sound_file = "./sound/alert-disponibilidad.mp3"
+            gif_file = "./gif/alertdisponibilidad.gif"
+        else:
+            continue  # No alertar si hay más de 1 consumidor
+
+        # Construir mensaje
+        message = (
+            f"{emoji} ALERTA RABBITMQ\n"
+            f"📦 Cola: {queue_name}\n"
+            f"⚙️ Tipo: {tipo_alerta}\n"
+            f"📉 Estado: {estado}\n"
+            f"👥 Consumidores: {consumers}"
+        )
+        message_wrapped = "\n".join(textwrap.wrap(message, width=60))
+
+        # Enviar mensaje por Telegram y mostrar popup
+        print(f"{emoji} Enviando alerta RabbitMQ para cola {queue_name}...")
+        threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+        threading.Thread(target=show_gif_popup, args=(gif_file, 6, message_wrapped, border_color), daemon=True).start()
 
     # 🟣 Alerta morada: Bloqueos por sesiones DB
     elif "ALERTDB" in tags or "DATABASE" in title:
@@ -172,7 +221,7 @@ def datadog_webhook():
             "produit": "🏭 Producción General"
         }
 
-        pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "🌍 País no identificado")
+        pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "País no identificado")
 
         # 🔹 Cortar el hostname si es demasiado largo (cada 45 caracteres)
         wrapped_host = "\n".join(textwrap.wrap(hostname, width=45))
