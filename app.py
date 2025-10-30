@@ -127,8 +127,8 @@ def datadog_webhook():
         threading.Thread(target=send_whatsapp_template, args=(host,), daemon=True).start()
         threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
 
-       # 🟠 Alerta naranja: RabbitMQ (Consumidores por cola)
-       elif "ALERTMQ" in tags or "RABBITMQ" in title:
+    # 🟠 Alerta naranja: RabbitMQ (Consumidores por cola)
+    elif "alertmq" in tags or "rabbitmq" in title:
         import re, textwrap
 
         border_color = "orange"
