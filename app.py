@@ -128,7 +128,7 @@ def datadog_webhook():
         threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
 
     # 🟠 Alerta naranja: RabbitMQ (Consumidores por cola)
-    elif "alertmq" in tags or "rabbitmq" in title:
+    elif "ALERTMQ" in tags or "RABBITMQ" in title:
         import re, textwrap
 
         border_color = "orange"
@@ -145,35 +145,30 @@ def datadog_webhook():
             or data.get("alert_metric")
             or ""
         )
-        raw_tags = data.get("tags", "")
+        title = event.get("title", "") or data.get("title", "")
 
-        # 🔍 Buscar el fragmento completo "rabbitmq_queue:xxxxx"
-        match = re.search(r"(rabbitmq_queue[:=][\w\-\._]+)", str(group))
-        if not match:
-            match = re.search(r"(rabbitmq_queue[:=][\w\-\._]+)", str(raw_tags))
+        print(f"🔍 DEBUG group recibido: {group}")  # 👀 para verificar qué llega desde Datadog
 
+        # 🔍 Buscar nombre de la cola (ejemplo: rabbitmq_queue:aliveness-test)
+        match = re.search(r"rabbitmq_queue[:=]([\w\-\._]+)", str(group))
         if match:
-            queue_full = match.group(1)  # ejemplo: rabbitmq_queue:logistic-overcost-co
+            queue_name = match.group(1)
         else:
-            queue_full = "rabbitmq_queue:Desconocido"
-
-        # ✅ Si host viene vacío, usar el nombre completo de la cola
-        host = data.get("host", "") or queue_full
+            queue_name = "Desconocido"
 
         # 🧾 Construir mensaje final
         message = (
             f"🟠 ALERTA RABBITMQ\n"
-            f"📦 {queue_full}\n"
-            f"🖥️ Host: {host}\n"
+            f"📦 Cola: {queue_name}\n"
             f"⚙️ Tipo: {tipo_alerta}\n"
             f"📉 Posible falta de consumidores"
         )
 
-        # 💡 Evitar desbordes
+        # 💡 Evitar que se desborde el texto
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
 
         # 🚀 Enviar alerta por Telegram + popup
-        print(f"🟠 Enviando alerta RabbitMQ para cola: {queue_full}...")
+        print(f"🟠 Enviando alerta RabbitMQ para cola: {queue_name}...")
         threading.Thread(
             target=send_telegram_message,
             args=(message_wrapped,),
