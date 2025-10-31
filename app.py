@@ -154,7 +154,6 @@ def datadog_webhook():
 
         message = (
             f"🚨 *ALERTA MEMORIA RABBITMQ*\n"
-            f"📦 Cola/Nodo: {queue_name}\n"
             f"🖥️ Host: {host}\n"
             f"💾 Estado: {status_msg}\n"
             f"Verifica uso de memoria en el nodo."
@@ -182,7 +181,6 @@ def datadog_webhook():
 
         message = (
             f"🟠 ALERTA RABBITMQ - CONSUMIDORES POR COLA\n"
-            f"📦 Cola: {queue_name}\n"
             f"🖥️ Host: {host}\n"
             f"📉 Estado: {status_msg}\n"
             f"Verifica que haya consumidores activos."
