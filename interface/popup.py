@@ -22,8 +22,7 @@ class Spark:
 
 # 📺 Popup con GIF + chispas
 class GifWithSparks(QWidget):
-    def __init__(self, gif_path, duration,
-                 width, height,
+    def __init__(self, gif_path, width, height,
                  border_color=QColor("red"), border_width=20, border_radius=0):
         super().__init__()
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
@@ -49,8 +48,6 @@ class GifWithSparks(QWidget):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_particles)
         self.timer.start(50)
-
-        QTimer.singleShot(duration * 1000, self.close)
 
     def update_particles(self):
         if random.random() < 0.5:
@@ -86,15 +83,15 @@ class GifWithSparks(QWidget):
             painter.setBrush(spark.color)
             painter.drawEllipse(spark.pos, spark.size, spark.size)
 
-# 📝 Popup de mensaje con ajuste dinámico
+# 📝 Popup de mensaje
 class MessagePopup(QWidget):
-    def __init__(self, message, duration, width, height):
+    def __init__(self, message, width, height):
         super().__init__()
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.setStyleSheet("background-color: black; border-radius: 20px;")
-        self.init_ui(message, duration, width, height)
+        self.init_ui(message, width, height)
 
-    def init_ui(self, message, duration, width, height):
+    def init_ui(self, message, width, height):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(25, 25, 25, 25)
         layout.setSpacing(10)
@@ -106,16 +103,12 @@ class MessagePopup(QWidget):
         label.setAlignment(Qt.AlignCenter)
         layout.addWidget(label)
 
-        # 🧠 Ajuste dinámico del alto del cuadro al texto
         fm = QFontMetrics(label.font())
         text_height = fm.boundingRect(0, 0, width - 50, 0, Qt.TextWordWrap, message).height()
         adjusted_height = min(max(150, text_height + 80), height)
         self.resize(width, adjusted_height)
 
-        # 🕐 Cierre automático
-        QTimer.singleShot(duration * 1000, self.close)
-
-# 🚀 Ejecución principal
+# 🚀 Ejecución principal (sincronizada)
 if __name__ == "__main__":
     gif_path = sys.argv[1]
     duration = int(sys.argv[2])
@@ -130,16 +123,23 @@ if __name__ == "__main__":
     msg_width = gif_width + 30
     msg_height = int(screen.height() * 0.2)
 
-    gif_popup = GifWithSparks(gif_path, duration, gif_width, gif_height, border_color=QColor(border_color))
+    gif_popup = GifWithSparks(gif_path, gif_width, gif_height, border_color=QColor(border_color))
     gif_x = (screen.width() - gif_width) // 2
     gif_y = (screen.height() - (gif_height + msg_height + 50)) // 2
     gif_popup.move(gif_x, gif_y)
 
-    msg_popup = MessagePopup(message, duration, msg_width, msg_height)
+    msg_popup = MessagePopup(message, msg_width, msg_height)
     msg_x = gif_x - 1
     msg_y = gif_y + gif_height + 30
     msg_popup.move(msg_x, msg_y)
 
     gif_popup.show()
     msg_popup.show()
+
+    # 💡 Ambos se cierran exactamente juntos
+    def close_both():
+        gif_popup.close()
+        msg_popup.close()
+
+    QTimer.singleShot(duration * 1000, close_both)
     app.exec_()
