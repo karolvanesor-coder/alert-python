@@ -177,6 +177,55 @@ def datadog_webhook():
             daemon=True
         ).start()
 
+    # 🟠 Alerta naranja: RabbitMQ (Consumidores por cola)
+    elif "ALERTMQ" in tags or "RABBITMQ" in title:
+        import re, textwrap
+
+        border_color = "orange"
+        sound_file = "./sound/alert-disponibilidad.mp3"
+        gif_file = "./gif/alertdisponibilidad.gif"
+        tipo_alerta = "Consumidores por cola RabbitMQ"
+
+        # 📊 Extraer información del webhook
+        event = data.get("event", {})
+        group = event.get("group", "") or data.get("group", "")
+        raw_tags = data.get("tags", "")
+        status_msg = data.get("status", "Sin información adicional")
+
+        # 🔍 Buscar la cola RabbitMQ en 'group' o 'tags'
+        match = re.search(r"(rabbitmq_queue[:=][\w\-\._]+)", str(group))
+        if not match:
+            match = re.search(r"(rabbitmq_queue[:=][\w\-\._]+)", str(raw_tags))
+        queue_name = match.group(1) if match else "rabbitmq_queue:Desconocido"
+
+        # ✅ Host: si no viene, usar la cola como referencia
+        host = data.get("host") or queue_name
+
+        # 🧾 Construir mensaje detallado
+        message = (
+            f"🟠 ALERTA RABBITMQ - CONSUMIDORES POR COLA\n"
+            f"📦 Cola: {queue_name}\n"
+            f"🖥️ Host: {host}\n"
+            f"⚙️ Tipo: {tipo_alerta}\n"
+            f"📉 Estado: {status_msg}\n"
+            f"Verifica que la cola tenga consumidores activos."
+        )
+
+        # 💡 Evitar desbordes de texto
+        message_wrapped = "\n".join(textwrap.wrap(message, width=60))
+
+        print(f"🟠 Enviando Telegram y Popup para alerta RabbitMQ en {queue_name}...")
+        threading.Thread(
+            target=send_telegram_message,
+            args=(message_wrapped,),
+            daemon=True
+        ).start()
+        threading.Thread(
+            target=show_gif_popup,
+            args=(gif_file, 6, message_wrapped, border_color),
+            daemon=True
+        ).start()
+
     # 🟣 Alerta morada: Bloqueos por sesiones DB
     elif "ALERTDB" in tags or "DATABASE" in title:
         import re, textwrap
