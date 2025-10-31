@@ -17,6 +17,7 @@ ALERT_CONFIG = {
     "DISCO": {"sound": "./sound/alert2.mp3", "gif": "./gif/alert2.gif"},
     "ALERTDB": {"sound": "./sound/alertdb.mp3", "gif": "./gif/alertdb.gif"},
     "ALERTMQ": {"sound": "./sound/alert-disponibilidad.mp3", "gif": "./gif/alertdisponibilidad.gif"},
+    "MEMORIAMQ": {"sound": "./sound/alertmem.mp3", "gif": "./gif/alertmem.gif"},  
 }
 
 DEFAULT_SOUND = "./sound/alert.mp3"
@@ -127,16 +128,54 @@ def datadog_webhook():
         threading.Thread(target=send_whatsapp_template, args=(host,), daemon=True).start()
         threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
 
-    # 🟠 Alerta naranja: RabbitMQ
-    elif "ALERTMQ" in tags or "RABBITMQ" in title:
-        border_color = "orange"
-        sound_file = "./sound/alert-disponibilidad.mp3"
-        gif_file = "./gif/alertdisponibilidad.gif"
-        tipo_alerta = "Consumidores por cola RabbitMQ"
+    # 🔴 Alerta crítica: Uso de Memoria en RabbitMQ
+    elif "MEMORIAMQ" in tags or "MEMORIAMQ" in title:
+        import re, textwrap
 
-        message = f"🟠 ALERTA RABBITMQ\nTipo: {tipo_alerta}"
-        print("🟠 Enviando Telegram para alerta RabbitMQ...")
-        threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
+        border_color = "#FF0000"  
+        sound_file = "./sound/alertmem.mp3"
+        gif_file = "./gif/alertmem.gif"
+        tipo_alerta = "Uso de Memoria en RabbitMQ Excesivo"
+
+        # 📊 Extraer detalles del webhook
+        event = data.get("event", {})
+        group = event.get("group", "") or data.get("group", "")
+        raw_tags = data.get("tags", "")
+        status_msg = data.get("status", "Sin información adicional")
+
+        # 🧩 Buscar cola RabbitMQ si viene en tags o group
+        match = re.search(r"(rabbitmq_queue[:=][\w\-\._]+)", str(group))
+        if not match:
+            match = re.search(r"(rabbitmq_queue[:=][\w\-\._]+)", str(raw_tags))
+        queue_name = match.group(1) if match else "rabbitmq_queue:Desconocido"
+
+        # ✅ Host: si no viene, usar la cola como referencia
+        host = data.get("host") or queue_name
+
+        # 🧾 Construir mensaje final con formato bonito
+        message = (
+            f"🚨 *ALERTA MEMORIA RABBITMQ*\n"
+            f"📦 Cola/Nodo: {queue_name}\n"
+            f"🖥️ Host: {host}\n"
+            f"⚙️ Tipo: {tipo_alerta}\n"
+            f"💾 Estado: {status_msg}\n"
+            f"Verifica uso de memoria en el nodo RabbitMQ."
+        )
+
+        # 💡 Evitar desbordes visuales
+        message_wrapped = "\n".join(textwrap.wrap(message, width=60))
+
+        print(f"🚨 Enviando Telegram y Popup para alerta de MEMORIA RabbitMQ en {host}...")
+        threading.Thread(
+            target=send_telegram_message,
+            args=(message_wrapped,),
+            daemon=True
+        ).start()
+        threading.Thread(
+            target=show_gif_popup,
+            args=(gif_file, 6, message_wrapped, border_color),
+            daemon=True
+        ).start()
 
     # 🟣 Alerta morada: Bloqueos por sesiones DB
     elif "ALERTDB" in tags or "DATABASE" in title:
