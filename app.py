@@ -135,7 +135,6 @@ def datadog_webhook():
         border_color = "#FF0000"  
         sound_file = "./sound/alertmem.mp3"
         gif_file = "./gif/alertmem.gif"
-        tipo_alerta = "Uso de Memoria en RabbitMQ Excesivo"
 
         # 📊 Extraer detalles del webhook
         event = data.get("event", {})
@@ -157,7 +156,6 @@ def datadog_webhook():
             f"🚨 *ALERTA MEMORIA RABBITMQ*\n"
             f"📦 Cola/Nodo: {queue_name}\n"
             f"🖥️ Host: {host}\n"
-            f"⚙️ Tipo: {tipo_alerta}\n"
             f"💾 Estado: {status_msg}\n"
             f"Verifica uso de memoria en el nodo RabbitMQ."
         )
@@ -184,7 +182,6 @@ def datadog_webhook():
         border_color = "orange"
         sound_file = "./sound/alert-disponibilidad.mp3"
         gif_file = "./gif/alertdisponibilidad.gif"
-        tipo_alerta = "Consumidores por cola RabbitMQ"
 
         # 📊 Extraer información del webhook
         event = data.get("event", {})
@@ -206,7 +203,6 @@ def datadog_webhook():
             f"🟠 ALERTA RABBITMQ - CONSUMIDORES POR COLA\n"
             f"📦 Cola: {queue_name}\n"
             f"🖥️ Host: {host}\n"
-            f"⚙️ Tipo: {tipo_alerta}\n"
             f"📉 Estado: {status_msg}\n"
             f"Verifica que la cola tenga consumidores activos."
         )
