@@ -240,7 +240,7 @@ def datadog_webhook():
         alert_triggered = True
 
     # 🔴 Resto de alertas críticas (si tienen un tag reconocido)
-    if selected_tag is not None:
+    if selected_tag is not None and not alert_triggered:
         border_color = "red"
         sound_file = ALERT_CONFIG.get(selected_tag, {}).get("sound", DEFAULT_SOUND)
         gif_file = ALERT_CONFIG.get(selected_tag, {}).get("gif", DEFAULT_GIF)
