@@ -191,6 +191,9 @@ def datadog_webhook():
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
         enqueue_alert(gif_file, 6, message_wrapped, border_color)
 
+    # ✅ Asegurar que group existe SIEMPRE
+    group = data.get("host", "") or data.get("tags", "") or ""
+
     # 🔴 Alerta de alto uso de CPU en Base de Datos
     elif "CPUBD" in tags or ".rds.amazonaws.com" in group.lower():
         import re, textwrap
