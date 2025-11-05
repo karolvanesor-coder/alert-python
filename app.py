@@ -190,11 +190,11 @@ def datadog_webhook():
 
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
         enqueue_alert(gif_file, 6, message_wrapped, border_color)
-        
+
     # 🔴 Alerta de alto uso de CPU en Base de Datos
-    elif "CPUBD" in tags or "DATABASE" in title:
+    elif "CPUBD" in tags or ".rds.amazonaws.com" in group.lower():
         import re, textwrap
-        border_color = "#FF4500"  
+        border_color = "#FF4500"
         gif_file = "./gif/alertcpudb.gif"
         sound_file = "./sound/alertcpudb.mp3"
 
@@ -203,27 +203,36 @@ def datadog_webhook():
         status_msg = data.get("status", "Sin información adicional")
         title = event.get("title", "") or data.get("title", "")
 
-        # 🧠 Detectar host o instancia RDS
+        # ---------------------------------------
+        # 🔍 EXTRAER hostname y nombre (si existe)
+        # ---------------------------------------
         hostname = "Desconocido"
+        dbname = "Desconocido"
 
-        # 1) Si viene con hostname:xxxx
-        match = re.search(r"hostname:([\w\.-]+)", group)
-        if match:
-            hostname = match.group(1)
+        # Buscar hostname:xxxx
+        m1 = re.search(r"hostname:([\w\.-]+)", group)
+        if m1:
+            hostname = m1.group(1)
 
-        # 2) Si es cluster RDS *.cluster-xxxx.amazonaws.com
+        # Buscar name:xxxx
+        m2 = re.search(r"name:([\w\.-]+)", group)
+        if m2:
+            dbname = m2.group(1)
+
+        # Si no detectó, buscar cluster/instancia
         if hostname == "Desconocido":
-            match = re.search(r"([\w-]+\.cluster[\w\.-]+\.amazonaws\.com)", group or title)
-            if match:
-                hostname = match.group(1)
+            m3 = re.search(r"([\w-]+\.cluster[\w\.-]+\.amazonaws\.com)", group or title)
+            if m3:
+                hostname = m3.group(1)
 
-        # 3) Si es instancia normal RDS
         if hostname == "Desconocido":
-            match = re.search(r"([\w\.-]+\.rds\.amazonaws\.com)", group or title)
-            if match:
-                hostname = match.group(1)
+            m4 = re.search(r"([\w\.-]+\.rds\.amazonaws\.com)", group or title)
+            if m4:
+                hostname = m4.group(1)
 
-        # 🌍 Detectar país por nombre del host
+        # ---------------------------------------
+        # 📍 detectar país
+        # ---------------------------------------
         country_map = {
             "colombia": "🇨🇴 Colombia",
             "mexico": "🇲🇽 México",
@@ -232,15 +241,21 @@ def datadog_webhook():
             "panama": "🇵🇦 Panamá",
             "paraguay": "🇵🇾 Paraguay",
             "peru": "🇵🇪 Perú",
+            "guatemala": "🇬🇹 Guatemala",
+            "espana": "🇪🇸 España",
         }
         pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "🌎 No identificado")
 
+        # ---------------------------------------
+        # 📨 mensaje formateado
+        # ---------------------------------------
         message = (
             f"🔥 *ALERTA CPU ALTA EN RDS*\n"
             f"{pais_detectado}\n"
             f"🖥️ Host: {hostname}\n"
+            f"📦 Base/Name: {dbname}\n"
             f"⚙️ Estado: {status_msg}\n"
-            f"Revisa el consumo de CPU de la base de datos en AWS."
+            f"Revisa el consumo de CPU de la base de datos."
         )
 
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
