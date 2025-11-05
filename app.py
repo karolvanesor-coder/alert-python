@@ -191,47 +191,61 @@ def datadog_webhook():
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
         enqueue_alert(gif_file, 6, message_wrapped, border_color)
 
-    # 🔴 Alerta de alto uso de CPU en Base de Datos
-    elif "CPUBD" in tags or "DATABASE" in title:
-        import re, textwrap
-        border_color = "#FF4500"  
-        gif_file = "./gif/alertcpudb.gif"
-        sound_file = "./sound/alertcpu.mp3"
+# 🔴 Alerta de alto uso de CPU en Base de Datos
+elif "CPUBD" in tags or "DATABASE" in title:
+    import re, textwrap
+    border_color = "#FF4500"  
+    gif_file = "./gif/alertcpudb.gif"
+    sound_file = "./sound/alertcpudb.mp3"
 
-        event = data.get("event", {})
-        group = event.get("group", "") or data.get("group", "")
-        status_msg = data.get("status", "Sin información adicional")
-        title = event.get("title", "") or data.get("title", "")
+    event = data.get("event", {})
+    group = event.get("group", "") or data.get("group", "")
+    status_msg = data.get("status", "Sin información adicional")
+    title = event.get("title", "") or data.get("title", "")
 
-        # 🧠 Detectar host o instancia RDS
-        hostname = "Desconocido"
+    # 🧠 Detectar host o instancia RDS
+    hostname = "Desconocido"
+
+    # 1) Si viene con hostname:xxxx
+    match = re.search(r"hostname:([\w\.-]+)", group)
+    if match:
+        hostname = match.group(1)
+
+    # 2) Si es cluster RDS *.cluster-xxxx.amazonaws.com
+    if hostname == "Desconocido":
         match = re.search(r"([\w-]+\.cluster[\w\.-]+\.amazonaws\.com)", group or title)
         if match:
             hostname = match.group(1)
 
-        # 🌍 Detectar país por nombre del host
-        country_map = {
-            "colombia": "🇨🇴 Colombia",
-            "mexico": "🇲🇽 México",
-            "chile": "🇨🇱 Chile",
-            "ecuador": "🇪🇨 Ecuador",
-            "panama": "🇵🇦 Panamá",
-            "paraguay": "🇵🇾 Paraguay",
-            "peru": "🇵🇪 Perú",
-        }
-        pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "🌎 No identificado")
+    # 3) Si es instancia normal RDS
+    if hostname == "Desconocido":
+        match = re.search(r"([\w\.-]+\.rds\.amazonaws\.com)", group or title)
+        if match:
+            hostname = match.group(1)
 
-        message = (
-            f"🔥 *ALERTA CPU ALTA EN RDS*\n"
-            f"{pais_detectado}\n"
-            f"🖥️ Host: {hostname}\n"
-            f"⚙️ Estado: {status_msg}\n"
-            f"Revisa el consumo de CPU de la base de datos en AWS."
-        )
+    # 🌍 Detectar país por nombre del host
+    country_map = {
+        "colombia": "🇨🇴 Colombia",
+        "mexico": "🇲🇽 México",
+        "chile": "🇨🇱 Chile",
+        "ecuador": "🇪🇨 Ecuador",
+        "panama": "🇵🇦 Panamá",
+        "paraguay": "🇵🇾 Paraguay",
+        "peru": "🇵🇪 Perú",
+    }
+    pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "🌎 No identificado")
 
-        message_wrapped = "\n".join(textwrap.wrap(message, width=60))
-        threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
-        enqueue_alert(gif_file, 6, message_wrapped, border_color)
+    message = (
+        f"🔥 *ALERTA CPU ALTA EN RDS*\n"
+        f"{pais_detectado}\n"
+        f"🖥️ Host: {hostname}\n"
+        f"⚙️ Estado: {status_msg}\n"
+        f"Revisa el consumo de CPU de la base de datos en AWS."
+    )
+
+    message_wrapped = "\n".join(textwrap.wrap(message, width=60))
+    threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+    enqueue_alert(gif_file, 6, message_wrapped, border_color)
 
     # 🟣 Bloqueos DB
     elif "ALERTDB" in tags or "DATABASE" in title:
