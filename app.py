@@ -246,7 +246,7 @@ def datadog_webhook():
             "ecuador": "🇪🇨 Ecuador", "panama": "🇵🇦 Panamá", "paraguay": "🇵🇾 Paraguay",
             "peru": "🇵🇪 Perú", "guatemala": "🇬🇹 Guatemala", "espana": "🇪🇸 España",
         }
-        pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "🌎 No identificado")
+        pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "País No identificado")
 
         # ---------------------------------------
         # 📨 mensaje formateado
@@ -286,7 +286,7 @@ def datadog_webhook():
             "ecuador": "🇪🇨 Ecuador", "panama": "🇵🇦 Panamá", "paraguay": "🇵🇾 Paraguay",
             "peru": "🇵🇪 Perú",
         }
-        pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "🌎 No identificado")
+        pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "País No identificado")
 
         message = (
             f"🟣 ALERTA BLOQUEOS DB\n"
