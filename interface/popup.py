@@ -20,6 +20,7 @@ class Spark:
         self.color.setAlpha(alpha)
         return self.life > 0
 
+
 # 📺 Popup con GIF + chispas
 class GifWithSparks(QWidget):
     def __init__(self, gif_path, width, height,
@@ -83,12 +84,15 @@ class GifWithSparks(QWidget):
             painter.setBrush(spark.color)
             painter.drawEllipse(spark.pos, spark.size, spark.size)
 
-# 📝 Popup de mensaje
+
+# ✅ Popup de mensaje (corregido para ajustarse bien)
 class MessagePopup(QWidget):
     def __init__(self, message, width, height):
         super().__init__()
+
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.setStyleSheet("background-color: black; border-radius: 20px;")
+
         self.init_ui(message, width, height)
 
     def init_ui(self, message, width, height):
@@ -101,12 +105,22 @@ class MessagePopup(QWidget):
         label.setStyleSheet("color: white; background: transparent;")
         label.setWordWrap(True)
         label.setAlignment(Qt.AlignCenter)
+
+        # ✅ CLAVE → limitar ancho para que el texto NUNCA se salga
+        label.setFixedWidth(width - 50)
+
         layout.addWidget(label)
 
         fm = QFontMetrics(label.font())
-        text_height = fm.boundingRect(0, 0, width - 50, 0, Qt.TextWordWrap, message).height()
+        text_height = fm.boundingRect(
+            0, 0, width - 50, 0,
+            Qt.TextWordWrap,
+            message
+        ).height()
+
         adjusted_height = min(max(150, text_height + 80), height)
         self.resize(width, adjusted_height)
+
 
 # 🚀 Ejecución principal (sincronizada)
 if __name__ == "__main__":
@@ -136,7 +150,6 @@ if __name__ == "__main__":
     gif_popup.show()
     msg_popup.show()
 
-    # 💡 Ambos se cierran exactamente juntos
     def close_both():
         gif_popup.close()
         msg_popup.close()
