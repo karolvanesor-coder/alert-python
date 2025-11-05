@@ -169,7 +169,7 @@ def datadog_webhook():
         host = data.get("host") or queue_name
 
         message = (
-            f"🚨 *ALERTA MEMORIA RABBITMQ*\n"
+            f"🚨 ALERTA MEMORIA RABBITMQ\n"
             f"🖥️ Host: {host}\n"
             f"📉 Estado: {status_msg}\n"
         )
