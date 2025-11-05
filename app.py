@@ -141,7 +141,7 @@ def datadog_webhook():
     group = data.get("host", "") or data.get("tags", "") or ""
 
     # 🟡 Alerta preventiva de disco
-    if selected_tag == "DISCO" and "warn" in alert_type:
+    elif selected_tag == "DISCO" and "warn" in alert_type:
         border_color = "yellow"
         sound_file = "./sound/alert-warn.mp3"
         gif_file = "./gif/warn.gif"
