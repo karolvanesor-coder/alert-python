@@ -239,6 +239,63 @@ def datadog_webhook():
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
         alert_triggered = True
 
+    # 🔴 Alerta de alto uso de CPU en Base de Datos
+    if "CPUBD" in tags or ".rds.amazonaws.com" in group.lower():
+        border_color = "#FF4500"
+        gif_file = "./gif/alertcpudb.gif"
+        sound_file = "./sound/alertcpudb.mp3"
+
+        status_msg = data.get("status", "Sin información adicional")
+        title = data.get("title", "")
+
+        # ---------------------------------------
+        # 🔍 EXTRAER hostname y nombre
+        # ---------------------------------------
+        hostname = "Desconocido"
+        dbname = "Desconocido"
+
+        m1 = re.search(r"hostname:([\w\.-]+)", group)
+        if m1:
+            hostname = m1.group(1)
+
+        m2 = re.search(r"name:([\w\.-]+)", group)
+        if m2:
+            dbname = m2.group(1)
+
+        if hostname == "Desconocido":
+            m3 = re.search(r"([\w-]+\.cluster[\w\.-]+\.amazonaws\.com)", group or title)
+            if m3:
+                hostname = m3.group(1)
+
+        if hostname == "Desconocido":
+            m4 = re.search(r"([\w\.-]+\.rds\.amazonaws\.com)", group or title)
+            if m4:
+                hostname = m4.group(1)
+
+        # ---------------------------------------
+        # 📍 detectar país
+        # ---------------------------------------
+        country_map = {
+            "colombia": "🇨🇴 Colombia", "mexico": "🇲🇽 México", "chile": "🇨🇱 Chile",
+            "ecuador": "🇪🇨 Ecuador", "panama": "🇵🇦 Panamá", "paraguay": "🇵🇾 Paraguay",
+            "peru": "🇵🇪 Perú", "guatemala": "🇬🇹 Guatemala", "espana": "🇪🇸 España",
+        }
+        pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "País No identificado")
+
+        message = (
+            f"🔴 ALERTA CPU ALTA EN RDS DB\n"
+            f"🌎 {pais_detectado}\n"
+            f"🖥️ Host: {hostname}\n"
+            f"📉 Estado: {status_msg}"
+        )
+
+        message_wrapped = "\n".join(textwrap.wrap(message, width=60))
+
+        # 📨 Telegram
+        threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+
+        alert_triggered = True
+
     # 🔴 Resto de alertas críticas (si tienen un tag reconocido)
     if selected_tag is not None and not alert_triggered:
         border_color = "red"
