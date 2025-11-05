@@ -203,41 +203,41 @@ def datadog_webhook():
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
         alert_triggered = True
 
-# 🟣 Bloqueos DB
-if "ALERTDB" in tags:
-    border_color = "purple"
-    gif_file = "./gif/alertdb.gif"
-    sound_file = "./sound/alertdb.mp3"
-    tipo_alerta = "Bloqueos por sesiones DB"
-    event = data.get("event", {})
-    group_db = event.get("group", "") or data.get("group", "")
-    title_db = event.get("title", "") or data.get("title", "")
+    # 🟣 Bloqueos DB
+    if "ALERTDB" in tags or "DATABASE" in title:
+        border_color = "purple"
+        gif_file = "./gif/alertdb.gif"
+        sound_file = "./sound/alertdb.mp3"
+        tipo_alerta = "Bloqueos por sesiones DB"
+        event = data.get("event", {})
+        group_db = event.get("group", "") or data.get("group", "")
+        title_db = event.get("title", "") or data.get("title", "")
 
-    hostname = "Desconocido"
-    match = re.search(r"([\w-]+\.cluster[\w\.-]+\.amazonaws\.com)", group_db or title_db)
-    if not match:
-        match = re.search(r"([\w\.-]+\.rds\.amazonaws\.com)", group_db or title_db)
-    
-    if match:
-        hostname = match.group(1)
+        hostname = "Desconocido"
+        match = re.search(r"([\w-]+\.cluster[\w\.-]+\.amazonaws\.com)", group_db or title_db)
+        if not match:
+            match = re.search(r"([\w\.-]+\.rds\.amazonaws\.com)", group_db or title_db)
+        
+        if match:
+            hostname = match.group(1)
 
-    country_map = {
-        "colombia": "🇨🇴 Colombia", "mexico": "🇲🇽 México", "chile": "🇨🇱 Chile",
-        "ecuador": "🇪🇨 Ecuador", "panama": "🇵🇦 Panamá", "paraguay": "🇵🇾 Paraguay",
-        "peru": "🇵🇪 Perú",
-    }
-    pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "País No identificado")
+        country_map = {
+            "colombia": "🇨🇴 Colombia", "mexico": "🇲🇽 México", "chile": "🇨🇱 Chile",
+            "ecuador": "🇪🇨 Ecuador", "panama": "🇵🇦 Panamá", "paraguay": "🇵🇾 Paraguay",
+            "peru": "🇵🇪 Perú",
+        }
+        pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "País No identificado")
 
-    message = (
-        f"🟣 ALERTA BLOQUEOS DB\n"
-        f"🌎 {pais_detectado}\n"
-        f"🖥️ Host: {hostname}\n"
-        f"💾 Tipo: {tipo_alerta}"
-    )
-    
-    message_wrapped = "\n".join(textwrap.wrap(message, width=60))
-    threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
-    alert_triggered = True
+        message = (
+            f"🟣 ALERTA BLOQUEOS DB\n"
+            f"🌎 {pais_detectado}\n"
+            f"🖥️ Host: {hostname}\n"
+            f"💾 Tipo: {tipo_alerta}"
+        )
+        
+        message_wrapped = "\n".join(textwrap.wrap(message, width=60))
+        threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+        alert_triggered = True
 
     # 🔴 Alerta de alto uso de CPU en Base de Datos
     if "CPUBD" in tags or ".rds.amazonaws.com" in group.lower():
