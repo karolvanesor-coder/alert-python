@@ -137,6 +137,9 @@ def datadog_webhook():
     
     alert_triggered = False # Flag para saber si se ha manejado la alerta
 
+    # Asegurar que group existe para las siguientes comprobaciones
+    group = data.get("host", "") or data.get("tags", "") or ""
+
     # 🟡 Alerta preventiva de disco
     if selected_tag == "DISCO" and "warn" in alert_type:
         border_color = "yellow"
@@ -147,9 +150,6 @@ def datadog_webhook():
         threading.Thread(target=send_whatsapp_template, args=(host,), daemon=True).start()
         threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
         alert_triggered = True
-
-    # Asegurar que group existe para las siguientes comprobaciones
-    group = data.get("host", "") or data.get("tags", "") or ""
 
     # 🔴 Memoria RabbitMQ
     elif "MEMORIAMQ" in tags or "MEMORIAMQ" in title:
