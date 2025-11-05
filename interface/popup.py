@@ -118,8 +118,8 @@ class MessagePopup(QWidget):
             message
         ).height()
 
-        adjusted_height = min(max(150, text_height + 80), height)
-        self.resize(width, adjusted_height)
+        final_height = max(150, text_height + 80)
+        self.resize(width, final_height)
 
 
 # 🚀 Ejecución principal (sincronizada)
