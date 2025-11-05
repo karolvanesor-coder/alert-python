@@ -172,7 +172,6 @@ def datadog_webhook():
             f"🚨 *ALERTA MEMORIA RABBITMQ*\n"
             f"🖥️ Host: {host}\n"
             f"📉 Estado: {status_msg}\n"
-            f"Verifica uso de memoria en el nodo."
         )
 
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
@@ -198,7 +197,6 @@ def datadog_webhook():
             f"🟠 ALERTA RABBITMQ - CONSUMIDORES POR COLA\n"
             f"🖥️ Host: {host}\n"
             f"📉 Estado: {status_msg}\n"
-            f"Verifica que haya consumidores activos."
         )
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
 
@@ -256,7 +254,6 @@ def datadog_webhook():
             f"🌎 {pais_detectado}\n"
             f"🖥️ Host: {hostname}\n"
             f"📉 Estado: {status_msg}\n"
-            f"Revisa el consumo de CPU de la base de datos."
         )
 
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
