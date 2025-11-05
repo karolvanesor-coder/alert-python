@@ -204,7 +204,7 @@ def datadog_webhook():
         alert_triggered = True
 
     # 🟣 Bloqueos DB
-    if "ALERTDB" in tags or "DATABASE" in title:
+    if "ALERTDB" in tags:
         border_color = "purple"
         gif_file = "./gif/alertdb.gif"
         sound_file = "./sound/alertdb.mp3"
@@ -240,13 +240,14 @@ def datadog_webhook():
         alert_triggered = True
 
     # 🔴 Alerta de alto uso de CPU en Base de Datos
-    if "CPUBD" in tags or ".rds.amazonaws.com" in group.lower():
+    if "CPUBD" in tags:
         border_color = "#FF4500"
         gif_file = "./gif/alertcpudb.gif"
         sound_file = "./sound/alertcpudb.mp3"
 
         status_msg = data.get("status", "Sin información adicional")
         title = data.get("title", "")
+        group = data.get("group", "")
 
         # ---------------------------------------
         # 🔍 EXTRAER hostname y nombre
@@ -291,7 +292,6 @@ def datadog_webhook():
 
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
 
-        # 📨 Telegram
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
 
         alert_triggered = True
