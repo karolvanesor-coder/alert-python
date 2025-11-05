@@ -7,6 +7,8 @@ import requests
 import json
 import time
 from queue import Queue
+import re
+import textwrap
 
 app = Flask(__name__)
 
@@ -30,7 +32,7 @@ DEFAULT_GIF = "./gif/alert.gif"
 # -------------------------------
 # 💬 Configuración WhatsApp Cloud API
 # -------------------------------
-WHATSAPP_TOKEN = "EAAWr2FNDoE4BPylAk01jG7cvYSGSxirB26uCv03hhU6oLqtATASZBn05ZA5sQ4176soEwBPg4hIP5dX7CgaiJHwZBqPsbY4cq9oaZB5DyFzcWYuPgZBZBt8PZCmoMZCq8J7ajVEBdtMnOndbZAkl6fBegZC7M2v9HmUmYzi9ZBIbera7mVmNHso769fEv3rw1RrHwZDZD"
+WHATSAPP_TOKEN = "EAAWr2FNDoE4BPylAk01jG7cvYSGSxirB26uCv03hhU6oLqtATASZBn05ZA5sQ4176soEwBPg4hIP5dX3CgaiJHwZBqPsbY4cq9oaZB5DyFzcWYuPgZBZBt8PZCmoMZCq8J7ajVEBdtMnOndbZAkl6fBegZC7M2v9HmUmYzi9ZBIbera7mVmNHso769fEv3rw1RrHwZDZD"
 WHATSAPP_NUMBER_ID = "847870818407171"
 WHATSAPP_TO_NUMBER = "573026298197"
 
@@ -127,6 +129,14 @@ def datadog_webhook():
 
     selected_tag = next((tag for tag in tags if tag in ALERT_CONFIG), None)
 
+    # Inicializar con valores predeterminados para la alerta final
+    border_color = "red"
+    sound_file = DEFAULT_SOUND
+    gif_file = DEFAULT_GIF
+    message = f"🚨 ALERTA CRÍTICA \nTipo: {selected_tag or 'SIN TAG'}\nHost: {host}"
+    
+    alert_triggered = False # Flag para saber si se ha manejado la alerta
+
     # 🟡 Alerta preventiva de disco
     if selected_tag == "DISCO" and "warn" in alert_type:
         border_color = "yellow"
@@ -136,19 +146,21 @@ def datadog_webhook():
 
         threading.Thread(target=send_whatsapp_template, args=(host,), daemon=True).start()
         threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
-        enqueue_alert(gif_file, 6, message, border_color)
+        alert_triggered = True
+
+    # Asegurar que group existe para las siguientes comprobaciones
+    group = data.get("host", "") or data.get("tags", "") or ""
 
     # 🔴 Memoria RabbitMQ
     elif "MEMORIAMQ" in tags or "MEMORIAMQ" in title:
-        import re, textwrap
         border_color = "#FF0000"
         gif_file = "./gif/alertmem.gif"
         sound_file = "./sound/alertmem.mp3"
         event = data.get("event", {})
-        group = event.get("group", "") or data.get("group", "")
+        group_mq = event.get("group", "") or data.get("group", "")
         status_msg = data.get("status", "Sin información adicional")
 
-        match = re.search(r"(rabbitmq_queue[:=][\w\-\._]+)", str(group))
+        match = re.search(r"(rabbitmq_queue[:=][\w\-\._]+)", str(group_mq))
         if not match:
             match = re.search(r"(rabbitmq_queue[:=][\w\-\._]+)", str(data.get("tags", "")))
         queue_name = match.group(1) if match else "rabbitmq_queue:Desconocido"
@@ -163,19 +175,18 @@ def datadog_webhook():
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
 
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
-        enqueue_alert(gif_file, 6, message_wrapped, border_color)
+        alert_triggered = True
 
     # 🟠 RabbitMQ consumidores
     elif "ALERTMQ" in tags or "RABBITMQ" in title:
-        import re, textwrap
         border_color = "orange"
         gif_file = "./gif/alertdisponibilidad.gif"
         sound_file = "./sound/alert-disponibilidad.mp3"
         event = data.get("event", {})
-        group = event.get("group", "") or data.get("group", "")
+        group_mq = event.get("group", "") or data.get("group", "")
         status_msg = data.get("status", "Sin información adicional")
 
-        match = re.search(r"(rabbitmq_queue[:=][\w\-\._]+)", str(group))
+        match = re.search(r"(rabbitmq_queue[:=][\w\-\._]+)", str(group_mq))
         if not match:
             match = re.search(r"(rabbitmq_queue[:=][\w\-\._]+)", str(data.get("tags", "")))
         queue_name = match.group(1) if match else "rabbitmq_queue:Desconocido"
@@ -190,14 +201,10 @@ def datadog_webhook():
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
 
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
-        enqueue_alert(gif_file, 6, message_wrapped, border_color)
-
-    # ✅ Asegurar que group existe SIEMPRE
-    group = data.get("host", "") or data.get("tags", "") or ""
+        alert_triggered = True
 
     # 🔴 Alerta de alto uso de CPU en Base de Datos
     elif "CPUBD" in tags or ".rds.amazonaws.com" in group.lower():
-        import re, textwrap
         border_color = "#FF4500"
         gif_file = "./gif/alertcpudb.gif"
         sound_file = "./sound/alertcpudb.mp3"
@@ -211,17 +218,14 @@ def datadog_webhook():
         hostname = "Desconocido"
         dbname = "Desconocido"
 
-        # Buscar hostname:xxxx
         m1 = re.search(r"hostname:([\w\.-]+)", group)
         if m1:
             hostname = m1.group(1)
 
-        # Buscar name:xxxx
         m2 = re.search(r"name:([\w\.-]+)", group)
         if m2:
             dbname = m2.group(1)
 
-        # Si no detectó, buscar cluster/instancia
         if hostname == "Desconocido":
             m3 = re.search(r"([\w-]+\.cluster[\w\.-]+\.amazonaws\.com)", group or title)
             if m3:
@@ -236,15 +240,9 @@ def datadog_webhook():
         # 📍 detectar país
         # ---------------------------------------
         country_map = {
-            "colombia": "🇨🇴 Colombia",
-            "mexico": "🇲🇽 México",
-            "chile": "🇨🇱 Chile",
-            "ecuador": "🇪🇨 Ecuador",
-            "panama": "🇵🇦 Panamá",
-            "paraguay": "🇵🇾 Paraguay",
-            "peru": "🇵🇪 Perú",
-            "guatemala": "🇬🇹 Guatemala",
-            "espana": "🇪🇸 España",
+            "colombia": "🇨🇴 Colombia", "mexico": "🇲🇽 México", "chile": "🇨🇱 Chile",
+            "ecuador": "🇪🇨 Ecuador", "panama": "🇵🇦 Panamá", "paraguay": "🇵🇾 Paraguay",
+            "peru": "🇵🇪 Perú", "guatemala": "🇬🇹 Guatemala", "espana": "🇪🇸 España",
         }
         pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "🌎 No identificado")
 
@@ -262,31 +260,29 @@ def datadog_webhook():
 
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
-        enqueue_alert(gif_file, 6, message_wrapped, border_color)
+        alert_triggered = True
 
     # 🟣 Bloqueos DB
     elif "ALERTDB" in tags or "DATABASE" in title:
-        import re, textwrap
         border_color = "purple"
         gif_file = "./gif/alertdb.gif"
         sound_file = "./sound/alertdb.mp3"
         tipo_alerta = "Bloqueos por sesiones DB"
         event = data.get("event", {})
-        group = event.get("group", "") or data.get("group", "")
-        title = event.get("title", "") or data.get("title", "")
+        group_db = event.get("group", "") or data.get("group", "")
+        title_db = event.get("title", "") or data.get("title", "")
 
         hostname = "Desconocido"
-        match = re.search(r"([\w-]+\.cluster[\w\.-]+\.amazonaws\.com)", group or title)
+        match = re.search(r"([\w-]+\.cluster[\w\.-]+\.amazonaws\.com)", group_db or title_db)
+        if not match:
+            match = re.search(r"([\w\.-]+\.rds\.amazonaws\.com)", group_db or title_db) # Búsqueda adicional
+        
         if match:
             hostname = match.group(1)
 
         country_map = {
-            "colombia": "🇨🇴 Colombia",
-            "mexico": "🇲🇽 México",
-            "chile": "🇨🇱 Chile",
-            "ecuador": "🇪🇨 Ecuador",
-            "panama": "🇵🇦 Panamá",
-            "paraguay": "🇵🇾 Paraguay",
+            "colombia": "🇨🇴 Colombia", "mexico": "🇲🇽 México", "chile": "🇨🇱 Chile",
+            "ecuador": "🇪🇨 Ecuador", "panama": "🇵🇦 Panamá", "paraguay": "🇵🇾 Paraguay",
             "peru": "🇵🇪 Perú",
         }
         pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "🌎 No identificado")
@@ -297,19 +293,26 @@ def datadog_webhook():
             f"🖥️ Host: {hostname}\n"
             f"💾 Tipo: {tipo_alerta}"
         )
+        
+        message_wrapped = "\n".join(textwrap.wrap(message, width=60)) # Se añade el wrap
+        threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+        alert_triggered = True
 
-        threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
-        enqueue_alert(gif_file, 6, message, border_color)
-
-    # 🔴 Resto de alertas
-    else:
+    # 🔴 Resto de alertas (Usamos los valores por defecto establecidos al principio)
+    elif selected_tag is not None:
+        # Se usa selected_tag en la comprobación para evitar el catch-all si no hay tag reconocido
         border_color = "red"
         sound_file = ALERT_CONFIG.get(selected_tag, {}).get("sound", DEFAULT_SOUND)
         gif_file = ALERT_CONFIG.get(selected_tag, {}).get("gif", DEFAULT_GIF)
-        message = f"🚨 ALERTA CRÍTICA \nTipo: {selected_tag or 'SIN TAG'}\nHost: {host}"
+        message = f"🚨 ALERTA CRÍTICA \nTipo: {selected_tag}\nHost: {host}"
+        alert_triggered = True
+        
+    # Encolar la alerta, si se disparó una específica (o si se dejó la por defecto para la última rama)
+    if alert_triggered or selected_tag is None: # Si se encontró una específica o si no se encontró tag y se dejó la genérica
         enqueue_alert(gif_file, 6, message, border_color)
+        threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
 
-    threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
+
     return {"status": "ok", "tags": tags, "host": host}, 200
 
 # -------------------------------
@@ -317,4 +320,5 @@ def datadog_webhook():
 # -------------------------------
 if __name__ == "__main__":
     print("🚀 Flask escuchando en http://127.0.0.1:5006")
+    # Nota: Es recomendable no usar debug=True en producción
     app.run(host="0.0.0.0", port=5006, debug=True)
