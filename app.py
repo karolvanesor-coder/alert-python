@@ -7,8 +7,8 @@ import requests
 import json
 import time
 from queue import Queue
-import re  # Importación movida al inicio
-import textwrap  # Importación movida al inicio
+import re
+import textwrap
 
 app = Flask(__name__)
 
@@ -152,7 +152,8 @@ def datadog_webhook():
     group = data.get("host", "") or data.get("tags", "") or ""
 
     # 🔴 Memoria RabbitMQ
-    elif "MEMORIAMQ" in tags or "MEMORIAMQ" in title:
+    # Esta es la línea 155 en el código que me has pasado
+    elif "MEMORIAMQ" in tags or "MEMORIAMQ" in title: 
         border_color = "#FF0000"
         gif_file = "./gif/alertmem.gif"
         sound_file = "./sound/alertmem.mp3"
