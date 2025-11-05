@@ -152,7 +152,7 @@ def datadog_webhook():
         alert_triggered = True
 
     # 🔴 Memoria RabbitMQ
-    elif "MEMORIAMQ" in tags or "MEMORIAMQ" in title:
+    if "MEMORIAMQ" in tags or "MEMORIAMQ" in title:
         border_color = "#FF0000"
         gif_file = "./gif/alertmem.gif"
         sound_file = "./sound/alertmem.mp3"
@@ -179,7 +179,7 @@ def datadog_webhook():
         alert_triggered = True
 
     # 🟠 RabbitMQ consumidores
-    elif "ALERTMQ" in tags or "RABBITMQ" in title:
+    if "ALERTMQ" in tags or "RABBITMQ" in title:
         border_color = "orange"
         gif_file = "./gif/alertdisponibilidad.gif"
         sound_file = "./sound/alert-disponibilidad.mp3"
@@ -204,7 +204,7 @@ def datadog_webhook():
         alert_triggered = True
 
     # 🟣 Bloqueos DB
-    elif "ALERTDB" in tags or "DATABASE" in title:
+    if "ALERTDB" in tags or "DATABASE" in title:
         border_color = "purple"
         gif_file = "./gif/alertdb.gif"
         sound_file = "./sound/alertdb.mp3"
@@ -240,7 +240,7 @@ def datadog_webhook():
         alert_triggered = True
 
     # 🔴 Resto de alertas críticas (si tienen un tag reconocido)
-    elif selected_tag is not None:
+    if selected_tag is not None:
         border_color = "red"
         sound_file = ALERT_CONFIG.get(selected_tag, {}).get("sound", DEFAULT_SOUND)
         gif_file = ALERT_CONFIG.get(selected_tag, {}).get("gif", DEFAULT_GIF)
