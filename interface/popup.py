@@ -92,6 +92,8 @@ class MessagePopup(QWidget):
         self.init_ui(message, width, height)
 
     def init_ui(self, message, width, height):
+        from PyQt5.QtWidgets import QScrollArea
+
         layout = QVBoxLayout(self)
         layout.setContentsMargins(25, 25, 25, 25)
         layout.setSpacing(10)
@@ -100,13 +102,26 @@ class MessagePopup(QWidget):
         label.setFont(QFont("Arial", 18, QFont.Bold))
         label.setStyleSheet("color: white; background: transparent;")
         label.setWordWrap(True)
-        label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(label)
+        label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
 
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet("background: transparent; border: none;")
+        scroll.setWidget(label)
+
+        layout.addWidget(scroll)
+
+        # ✅ Cálculo dinámico
         fm = QFontMetrics(label.font())
-        text_height = fm.boundingRect(0, 0, width - 50, 0, Qt.TextWordWrap, message).height()
-        adjusted_height = min(max(150, text_height + 80), height)
-        self.resize(width, adjusted_height)
+        text_height = fm.boundingRect(0, 0, width - 80, 0, Qt.TextWordWrap, message).height()
+        base_height = text_height + 80
+
+        # ✅ Limite para evitar desborde
+        max_height = int(height)
+
+        final_height = min(max(200, base_height), max_height)
+
+        self.resize(width, final_height)
 
 # 🚀 Ejecución principal (sincronizada)
 if __name__ == "__main__":
