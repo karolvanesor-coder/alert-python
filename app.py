@@ -171,7 +171,7 @@ def datadog_webhook():
         message = (
             f"🚨 *ALERTA MEMORIA RABBITMQ*\n"
             f"🖥️ Host: {host}\n"
-            f"💾 Estado: {status_msg}\n"
+            f"📉 Estado: {status_msg}\n"
             f"Verifica uso de memoria en el nodo."
         )
 
@@ -252,10 +252,11 @@ def datadog_webhook():
         # 📨 mensaje formateado
         # ---------------------------------------
         message = (
-            f"ALERTA CPU ALTA EN RDS\n"
-            f"{pais_detectado}\n"
+            f"🔴 ALERTA CPU ALTA EN RDS DB\n"
+            f"🌎 {pais_detectado}\n"
             f"🖥️ Host: {hostname}\n"
-            f"⚙️ Estado: {status_msg}\n"
+            f"📉 Estado: {status_msg}\n"
+            f"Revisa el consumo de CPU de la base de datos."
         )
 
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
@@ -289,7 +290,7 @@ def datadog_webhook():
 
         message = (
             f"🟣 ALERTA BLOQUEOS DB\n"
-            f"{pais_detectado}\n"
+            f"🌎 {pais_detectado}\n"
             f"🖥️ Host: {hostname}\n"
             f"💾 Tipo: {tipo_alerta}"
         )
