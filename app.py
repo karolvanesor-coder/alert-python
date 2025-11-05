@@ -196,7 +196,7 @@ def datadog_webhook():
     group = data.get("host", "") or data.get("tags", "") or ""
 
     # 🔴 Alerta de alto uso de CPU en Base de Datos
-    elif "CPUBD" in tags or ".rds.amazonaws.com" in group.lower():
+        elif "CPUBD" in tags or ".rds.amazonaws.com" in group.lower():
         import re, textwrap
         border_color = "#FF4500"
         gif_file = "./gif/alertcpudb.gif"
