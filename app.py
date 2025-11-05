@@ -23,7 +23,7 @@ ALERT_CONFIG = {
     "ALERTDB": {"sound": "./sound/alertdb.mp3", "gif": "./gif/alertdb.gif"},
     "ALERTMQ": {"sound": "./sound/alert-disponibilidad.mp3", "gif": "./gif/alertdisponibilidad.gif"},
     "MEMORIAMQ": {"sound": "./sound/alertmem.mp3", "gif": "./gif/alertmem.gif"},
-    "CPUBD": {"sound": "./sound/alertcpudb.mp3", "gif": "./gif/alertcpudb.gif"},
+    "CPUDB": {"sound": "./sound/alertcpudb.mp3", "gif": "./gif/alertcpudb.gif"},
 }
 
 DEFAULT_SOUND = "./sound/alert.mp3"
@@ -152,7 +152,7 @@ def datadog_webhook():
         alert_triggered = True
 
     # 🔴 Memoria RabbitMQ
-    if "MEMORIAMQ" in tags or "MEMORIAMQ" in title:
+    if "MEMORIAMQ" in tags:
         border_color = "#FF0000"
         gif_file = "./gif/alertmem.gif"
         sound_file = "./sound/alertmem.mp3"
@@ -240,7 +240,7 @@ def datadog_webhook():
         alert_triggered = True
 
     # 🔴 Alerta de alto uso de CPU en Base de Datos
-    if "CPUBD" in tags:
+    if "CPUDB" in tags:
         border_color = "#FF4500"
         gif_file = "./gif/alertcpudb.gif"
         sound_file = "./sound/alertcpudb.mp3"
