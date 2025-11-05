@@ -194,7 +194,7 @@ def datadog_webhook():
 # 🔴 Alerta de alto uso de CPU en Base de Datos
 elif "CPUBD" in tags or "DATABASE" in title:
     import re, textwrap
-    border_color = "#FF4500"  
+    border_color = "#FF4500"
     gif_file = "./gif/alertcpudb.gif"
     sound_file = "./sound/alertcpudb.mp3"
 
