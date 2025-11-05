@@ -152,11 +152,12 @@ def datadog_webhook():
     group = data.get("host", "") or data.get("tags", "") or ""
 
     # 🔴 Memoria RabbitMQ
-    # Esta es la línea 155 en el código que me has pasado
-    elif "MEMORIAMQ" in tags or "MEMORIAMQ" in title: 
+    elif "MEMORIAMQ" in tags or "MEMORIAMQ" in title:
+        import re, textwrap
         border_color = "#FF0000"
         gif_file = "./gif/alertmem.gif"
         sound_file = "./sound/alertmem.mp3"
+
         event = data.get("event", {})
         group_mq = event.get("group", "") or data.get("group", "")
         status_msg = data.get("status", "Sin información adicional")
@@ -165,6 +166,7 @@ def datadog_webhook():
         if not match:
             match = re.search(r"(rabbitmq_queue[:=][\w\-\._]+)", str(data.get("tags", "")))
         queue_name = match.group(1) if match else "rabbitmq_queue:Desconocido"
+
         host = data.get("host") or queue_name
 
         message = (
@@ -173,8 +175,8 @@ def datadog_webhook():
             f"💾 Estado: {status_msg}\n"
             f"Verifica uso de memoria en el nodo."
         )
-        message_wrapped = "\n".join(textwrap.wrap(message, width=60))
 
+        message_wrapped = "\n".join(textwrap.wrap(message, width=60))
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
         alert_triggered = True
 
