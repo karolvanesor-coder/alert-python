@@ -198,13 +198,11 @@ def datadog_webhook():
         gif_file = "./gif/alertcpudb.gif"
         sound_file = "./sound/alertcpudb.mp3"
 
-        event = data.get("event", {})
-        group = event.get("group", "") or data.get("group", "")
         status_msg = data.get("status", "Sin información adicional")
-        title = event.get("title", "") or data.get("title", "")
+        title = data.get("title", "")
 
         # ---------------------------------------
-        # 🔍 EXTRAER hostname y nombre (si existe)
+        # 🔍 EXTRAER hostname y nombre
         # ---------------------------------------
         hostname = "Desconocido"
         dbname = "Desconocido"
@@ -253,7 +251,7 @@ def datadog_webhook():
             f"🔥 *ALERTA CPU ALTA EN RDS*\n"
             f"{pais_detectado}\n"
             f"🖥️ Host: {hostname}\n"
-            f"📦 Base/Name: {dbname}\n"
+            f"📦 Name: {dbname}\n"
             f"⚙️ Estado: {status_msg}\n"
             f"Revisa el consumo de CPU de la base de datos."
         )
