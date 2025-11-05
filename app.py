@@ -13,6 +13,7 @@ app = Flask(__name__)
 # -------------------------------
 # ⚙️ Configuración de alertas
 # -------------------------------
+
 ALERT_CONFIG = {
     "CPU": {"sound": "./sound/alert.mp3", "gif": "./gif/alert.gif"},
     "MEMORIA": {"sound": "./sound/alert1.mp3", "gif": "./gif/alert1.gif"},
