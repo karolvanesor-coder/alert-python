@@ -252,12 +252,10 @@ def datadog_webhook():
         # 📨 mensaje formateado
         # ---------------------------------------
         message = (
-            f"🔥 *ALERTA CPU ALTA EN RDS*\n"
+            f"ALERTA CPU ALTA EN RDS\n"
             f"{pais_detectado}\n"
             f"🖥️ Host: {hostname}\n"
-            f"📦 Name: {dbname}\n"
             f"⚙️ Estado: {status_msg}\n"
-            f"Revisa el consumo de CPU de la base de datos."
         )
 
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
