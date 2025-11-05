@@ -104,7 +104,7 @@ def send_whatsapp_template(host_name):
 def send_telegram_message(message):
     for chat_id in TELEGRAM_CHAT_IDS:
         url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-        payload = {"chat_id": chat_id, "text": message, "parse_mode": "Markdown"}
+        payload = {"chat_id": chat_id, "text": message, "parse_mode": "None"}
         try:
             r = requests.post(url, json=payload)
             print(f"✅ Telegram enviado a {chat_id}" if r.status_code == 200 else f"⚠️ Error Telegram: {r.text}")
@@ -283,7 +283,7 @@ def datadog_webhook():
         pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "País No identificado")
 
         message = (
-            f"🔴 ALERTA CPU ALTA EN RDS DB\n"
+            f"🔴 ALERTA CPU ALTA EN DB\n"
             f"🌎 {pais_detectado}\n"
             f"🖥️ Host: {hostname}\n"
             f"📉 Estado: {status_msg}"
