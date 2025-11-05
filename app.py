@@ -153,7 +153,7 @@ def datadog_webhook():
 
     # 🔴 Memoria RabbitMQ
     elif "MEMORIAMQ" in tags or "MEMORIAMQ" in title:
-        import re, textwrap
+        import textwrap
         border_color = "#FF0000"
         gif_file = "./gif/alertmem.gif"
         sound_file = "./sound/alertmem.mp3"
