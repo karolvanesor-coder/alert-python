@@ -92,37 +92,31 @@ class MessagePopup(QWidget):
         self.init_ui(message, width, height)
 
     def init_ui(self, message, width, height):
-        from PyQt5.QtWidgets import QScrollArea
+    layout = QVBoxLayout(self)
+    layout.setContentsMargins(25, 25, 25, 25)
+    layout.setSpacing(10)
 
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(25, 25, 25, 25)
-        layout.setSpacing(10)
+    label = QLabel(message)
+    label.setFont(QFont("Arial", 18, QFont.Bold))
+    label.setStyleSheet("color: white; background: transparent;")
+    label.setWordWrap(True)
+    label.setAlignment(Qt.AlignCenter)
 
-        label = QLabel(message)
-        label.setFont(QFont("Arial", 18, QFont.Bold))
-        label.setStyleSheet("color: white; background: transparent;")
-        label.setWordWrap(True)
-        label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+    # ✅ Forzar que NO se expanda horizontalmente
+    label.setFixedWidth(width - 60)
 
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("background: transparent; border: none;")
-        scroll.setWidget(label)
+    layout.addWidget(label)
 
-        layout.addWidget(scroll)
+    # ✅ Recalcular altura adecuada
+    fm = QFontMetrics(label.font())
+    text_rect = fm.boundingRect(0, 0, width - 60, 0, Qt.TextWordWrap, message)
+    text_height = text_rect.height()
 
-        # ✅ Cálculo dinámico
-        fm = QFontMetrics(label.font())
-        text_height = fm.boundingRect(0, 0, width - 80, 0, Qt.TextWordWrap, message).height()
-        base_height = text_height + 80
+    # ✅ Ajustar altura del popup
+    adjusted_height = min(max(150, text_height + 80), height)
 
-        # ✅ Limite para evitar desborde
-        max_height = int(height)
-
-        final_height = min(max(200, base_height), max_height)
-
-        self.resize(width, final_height)
-
+    self.resize(width, adjusted_height)
+    
 # 🚀 Ejecución principal (sincronizada)
 if __name__ == "__main__":
     gif_path = sys.argv[1]
