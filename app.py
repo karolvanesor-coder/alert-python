@@ -204,7 +204,7 @@ def datadog_webhook():
         alert_triggered = True
 
     # 🟣 Bloqueos DB
-    if "ALERTDB" in tags or "DATABASE" in title:
+    if "ALERTDB" in tags:
         border_color = "purple"
         gif_file = "./gif/alertdb.gif"
         sound_file = "./sound/alertdb.mp3"
