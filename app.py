@@ -7,8 +7,8 @@ import requests
 import json
 import time
 from queue import Queue
-import re
-import textwrap
+import re  # Importación movida al inicio
+import textwrap  # Importación movida al inicio
 
 app = Flask(__name__)
 
@@ -32,7 +32,7 @@ DEFAULT_GIF = "./gif/alert.gif"
 # -------------------------------
 # 💬 Configuración WhatsApp Cloud API
 # -------------------------------
-WHATSAPP_TOKEN = "EAAWr2FNDoE4BPylAk01jG7cvYSGSxirB26uCv03hhU6oLqtATASZBn05ZA5sQ4176soEwBPg4hIP5dX3CgaiJHwZBqPsbY4cq9oaZB5DyFzcWYuPgZBZBt8PZCmoMZCq8J7ajVEBdtMnOndbZAkl6fBegZC7M2v9HmUmYzi9ZBIbera7mVmNHso769fEv3rw1RrHwZDZD"
+WHATSAPP_TOKEN = "EAAWr2FNDoE4BPylAk01jG7cvYSGSxirB26uCv03hhU6oLqtATASZBn05ZA5sQ4176soEwBPg4hIP5dX7CgaiJHwZBqPsbY4cq9oaZB5DyFzcWYuPgZBZBt8PZCmoMZCq8J7ajVEBdtMnOndbZAkl6fBegZC7M2v9HmUmYzi9ZBIbera7mVmNHso769fEv3rw1RrHwZDZD"
 WHATSAPP_NUMBER_ID = "847870818407171"
 WHATSAPP_TO_NUMBER = "573026298197"
 
@@ -275,7 +275,7 @@ def datadog_webhook():
         hostname = "Desconocido"
         match = re.search(r"([\w-]+\.cluster[\w\.-]+\.amazonaws\.com)", group_db or title_db)
         if not match:
-            match = re.search(r"([\w\.-]+\.rds\.amazonaws\.com)", group_db or title_db) # Búsqueda adicional
+            match = re.search(r"([\w\.-]+\.rds\.amazonaws\.com)", group_db or title_db)
         
         if match:
             hostname = match.group(1)
@@ -294,21 +294,20 @@ def datadog_webhook():
             f"💾 Tipo: {tipo_alerta}"
         )
         
-        message_wrapped = "\n".join(textwrap.wrap(message, width=60)) # Se añade el wrap
+        message_wrapped = "\n".join(textwrap.wrap(message, width=60))
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
         alert_triggered = True
 
-    # 🔴 Resto de alertas (Usamos los valores por defecto establecidos al principio)
+    # 🔴 Resto de alertas críticas (si tienen un tag reconocido)
     elif selected_tag is not None:
-        # Se usa selected_tag en la comprobación para evitar el catch-all si no hay tag reconocido
         border_color = "red"
         sound_file = ALERT_CONFIG.get(selected_tag, {}).get("sound", DEFAULT_SOUND)
         gif_file = ALERT_CONFIG.get(selected_tag, {}).get("gif", DEFAULT_GIF)
         message = f"🚨 ALERTA CRÍTICA \nTipo: {selected_tag}\nHost: {host}"
         alert_triggered = True
         
-    # Encolar la alerta, si se disparó una específica (o si se dejó la por defecto para la última rama)
-    if alert_triggered or selected_tag is None: # Si se encontró una específica o si no se encontró tag y se dejó la genérica
+    # Encolar la alerta y reproducir sonido si se activó alguna rama (incluida la por defecto)
+    if alert_triggered or selected_tag is None:
         enqueue_alert(gif_file, 6, message, border_color)
         threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
 
@@ -320,5 +319,4 @@ def datadog_webhook():
 # -------------------------------
 if __name__ == "__main__":
     print("🚀 Flask escuchando en http://127.0.0.1:5006")
-    # Nota: Es recomendable no usar debug=True en producción
     app.run(host="0.0.0.0", port=5006, debug=True)
