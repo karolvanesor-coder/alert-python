@@ -342,7 +342,7 @@ def datadog_webhook():
         message = (
             f"🔵 ALERTA CONEXIONES ALTAS EN DB\n"
             f"🌎 {pais_detectado}\n"
-            f"🖥️ Host: {hostname} - "
+            f"🖥️ Host: {hostname}  "
             f"📉 Estado: {status_msg}"
         )
 
