@@ -24,6 +24,7 @@ ALERT_CONFIG = {
     "ALERTMQ": {"sound": "./sound/alert-disponibilidad.mp3", "gif": "./gif/alertdisponibilidad.gif"},
     "MEMORIAMQ": {"sound": "./sound/alertmem.mp3", "gif": "./gif/alertmem.gif"},
     "CPUDB": {"sound": "./sound/alertcpudb.mp3", "gif": "./gif/alertcpudb.gif"},
+    "CONNDB": {"sound": "./sound/alertconndb.mp3", "gif": "./gif/alertconndb.gif"},
 }
 
 DEFAULT_SOUND = "./sound/alert.mp3"
@@ -292,6 +293,62 @@ def datadog_webhook():
 
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
 
+        threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+
+        alert_triggered = True
+
+    # 🔵 Alerta de uso alto de conexiones en Base de Datos
+    if "CONNDB" in tags:
+        border_color = "#1E90FF"
+        gif_file = "./gif/alertconndb.gif"
+        sound_file = "./sound/alertconndb.mp3"
+
+        status_msg = data.get("status", "Sin información adicional")
+        title = data.get("title", "")
+        group = data.get("group", "")
+
+        # ---------------------------------------
+        # 🔍 EXTRAER hostname
+        # ---------------------------------------
+        hostname = "Desconocido"
+
+        m1 = re.search(r"hostname:([\w\.-]+)", group)
+        if m1:
+            hostname = m1.group(1)
+
+        if hostname == "Desconocido":
+            m2 = re.search(r"([\w-]+\.cluster[\w\.-]+\.amazonaws\.com)", group or title)
+            if m2:
+                hostname = m2.group(1)
+
+        if hostname == "Desconocido":
+            m3 = re.search(r"([\w\.-]+\.rds\.amazonaws\.com)", group or title)
+            if m3:
+                hostname = m3.group(1)
+
+        # ---------------------------------------
+        # 📍 detectar país
+        # ---------------------------------------
+        country_map = {
+            "colombia": "🇨🇴 Colombia", "mexico": "🇲🇽 México", "chile": "🇨🇱 Chile",
+            "ecuador": "🇪🇨 Ecuador", "panama": "🇵🇦 Panamá", "paraguay": "🇵🇾 Paraguay",
+            "peru": "🇵🇪 Perú", "guatemala": "🇬🇹 Guatemala", "espana": "🇪🇸 España",
+        }
+        pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "País No identificado")
+
+        # ---------------------------------------
+        # 📄 MENSAJE
+        # ---------------------------------------
+        message = (
+            f"🔵 ALERTA CONEXIONES ALTAS EN DB\n"
+            f"🌎 {pais_detectado}\n"
+            f"🖥️ Host: {hostname}\n"
+            f"📉 Estado: {status_msg}"
+        )
+
+        message_wrapped = "\n".join(textwrap.wrap(message, width=60))
+
+        # 📨 Telegram
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
 
         alert_triggered = True
