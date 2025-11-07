@@ -17,14 +17,15 @@ app = Flask(__name__)
 # -------------------------------
 
 ALERT_CONFIG = {
-    "CPU": {"sound": "./sound/alert.mp3", "gif": "./gif/alert.gif"},
-    "MEMORIA": {"sound": "./sound/alert1.mp3", "gif": "./gif/alert1.gif"},
-    "DISCO": {"sound": "./sound/alert2.mp3", "gif": "./gif/alert2.gif"},
+    "CPU": {"sound": "./sound/cpu.mp3", "gif": "./gif/alert.gif"},
+    "MEMORIA": {"sound": "./sound/memoria.mp3", "gif": "./gif/alert1.gif"},
+    "DISCO": {"sound": "./sound/disco.mp3", "gif": "./gif/alert2.gif"},
     "ALERTDB": {"sound": "./sound/alertdb.mp3", "gif": "./gif/alertdb.gif"},
-    "ALERTMQ": {"sound": "./sound/alert-disponibilidad.mp3", "gif": "./gif/alertdisponibilidad.gif"},
+    "ALERTMQ": {"sound": "./sound/disponibilidad.mp3", "gif": "./gif/alertdisponibilidad.gif"},
     "MEMORIAMQ": {"sound": "./sound/alertmem.mp3", "gif": "./gif/alertmem.gif"},
     "CPUDB": {"sound": "./sound/alertcpudb.mp3", "gif": "./gif/alertcpudb.gif"},
     "CONNDB": {"sound": "./sound/alertconndb.mp3", "gif": "./gif/alertconndb.gif"},
+    "SUPERVISOR": {"sound": "./sound/supervisor.mp3", "gif": "./gif/supervisor.gif"},
 }
 
 DEFAULT_SOUND = "./sound/alert.mp3"
@@ -355,7 +356,7 @@ def datadog_webhook():
 
     # 🔴 Alerta supervisord DOWN
     if "SUPERVISOR" in tags:
-        border_color = "#8B0000"
+        border_color = "blue"
         gif_file = "./gif/alertsupervisor.gif"
         sound_file = "./sound/alertsupervisor.mp3"
 
@@ -385,11 +386,11 @@ def datadog_webhook():
             "ecuador": "🇪🇨 Ecuador", "panama": "🇵🇦 Panamá", "paraguay": "🇵🇾 Paraguay",
             "peru": "🇵🇪 Perú", "guatemala": "🇬🇹 Guatemala", "espana": "🇪🇸 España",
         }
-        pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "🌎 País No identificado")
+        pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "País No identificado")
 
         message = (
-            "🚨 *SUPERVISOR DOWN*\n"
-            f"{pais_detectado}\n"
+            "🟠 SUPERVISOR \n"
+            f"🌎 {pais_detectado}\n"
             f"🖥️ Host: {hostname}\n"
             f"📦 Supervisor: {supervisord_server}\n"
             f"📉 Estado: {status_msg}"
