@@ -353,6 +353,54 @@ def datadog_webhook():
 
         alert_triggered = True
 
+    # 🔴 Alerta supervisord DOWN
+    if "SUPERVISOR" in tags:
+        border_color = "#8B0000"
+        gif_file = "./gif/alertsupervisor.gif"
+        sound_file = "./sound/alertsupervisor.mp3"
+
+        status_msg = data.get("status", "Sin información adicional")
+        title = data.get("title", "")
+        group = data.get("group", "")
+
+        # ---------------------------------------
+        # 🔍 EXTRAER info relevante
+        # ---------------------------------------
+        hostname = "Desconocido"
+        supervisord_server = "Desconocido"
+
+        m1 = re.search(r"host:([\w\.-]+)", group)
+        if m1:
+            hostname = m1.group(1)
+
+        m2 = re.search(r"supervisord_server:([\w\.-]+)", group)
+        if m2:
+            supervisord_server = m2.group(1)
+
+        # ---------------------------------------
+        # 📍 detectar país por hostname
+        # ---------------------------------------
+        country_map = {
+            "colombia": "🇨🇴 Colombia", "mexico": "🇲🇽 México", "chile": "🇨🇱 Chile",
+            "ecuador": "🇪🇨 Ecuador", "panama": "🇵🇦 Panamá", "paraguay": "🇵🇾 Paraguay",
+            "peru": "🇵🇪 Perú", "guatemala": "🇬🇹 Guatemala", "espana": "🇪🇸 España",
+        }
+        pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "🌎 País No identificado")
+
+        message = (
+            "🚨 *SUPERVISOR DOWN*\n"
+            f"{pais_detectado}\n"
+            f"🖥️ Host: {hostname}\n"
+            f"📦 Supervisor: {supervisord_server}\n"
+            f"📉 Estado: {status_msg}"
+        )
+
+        message_wrapped = "\n".join(textwrap.wrap(message, width=60))
+
+        threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+
+        alert_triggered = True
+
     # 🔴 Resto de alertas críticas (si tienen un tag reconocido)
     if selected_tag is not None and not alert_triggered:
         border_color = "red"
