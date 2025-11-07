@@ -354,7 +354,7 @@ def datadog_webhook():
 
         alert_triggered = True
 
-    # 🔴 Alerta supervisord DOWN
+    # 🔴 Alerta supervisord 
     if "SUPERVISOR" in tags:
         border_color = "blue"
         gif_file = "./gif/alertsupervisor.gif"
