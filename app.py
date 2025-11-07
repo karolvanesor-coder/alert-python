@@ -357,8 +357,8 @@ def datadog_webhook():
     # 🔴 Alerta supervisord 
     if "SUPERVISOR" in tags:
         border_color = "blue"
-        gif_file = "./gif/alertsupervisor.gif"
-        sound_file = "./sound/alertsupervisor.mp3"
+        gif_file = "./gif/supervisor.gif"
+        sound_file = "./sound/supervisor.mp3"
 
         status_msg = data.get("status", "Sin información adicional")
         title = data.get("title", "")
