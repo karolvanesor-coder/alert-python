@@ -354,7 +354,7 @@ def datadog_webhook():
 
         alert_triggered = True
 
-    # 🔴 Alerta supervisord 
+    # 🔴 Alerta supervisor
     if "SUPERVISOR" in tags:
         border_color = "blue"
         gif_file = "./gif/supervisor.gif"
@@ -363,6 +363,9 @@ def datadog_webhook():
         status_msg = data.get("status", "Sin información adicional")
         title = data.get("title", "")
         group = data.get("group", "")
+        tags_str = data.get("tags", "")
+
+        raw = f"{group} {tags_str} {title}"
 
         # ---------------------------------------
         # 🔍 EXTRAER info relevante
@@ -370,11 +373,11 @@ def datadog_webhook():
         hostname = "Desconocido"
         supervisord_server = "Desconocido"
 
-        m1 = re.search(r"host:([\w\.-]+)", group)
+        m1 = re.search(r"host:([\w\.-]+)", raw)
         if m1:
             hostname = m1.group(1)
 
-        m2 = re.search(r"supervisord_server:([\w\.-]+)", group)
+        m2 = re.search(r"supervisord_server:([\w\.-]+)", raw)
         if m2:
             supervisord_server = m2.group(1)
 
@@ -389,7 +392,7 @@ def datadog_webhook():
         pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "País No identificado")
 
         message = (
-            "🟠 SUPERVISOR \n"
+            "🟠 SUPERVISOR\n"
             f"🌎 {pais_detectado}\n"
             f"🖥️ Host: {hostname}\n"
             f"📦 Supervisor: {supervisord_server}\n"
