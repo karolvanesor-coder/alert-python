@@ -184,7 +184,7 @@ def datadog_webhook():
     if "ALERTMQ" in tags or "RABBITMQ" in title:
         border_color = "orange"
         gif_file = "./gif/alertdisponibilidad.gif"
-        sound_file = "./sound/alert-disponibilidad.mp3"
+        sound_file = "./sound/disponibilidad.mp3"
         event = data.get("event", {})
         group_mq = event.get("group", "") or data.get("group", "")
         status_msg = data.get("status", "Sin información adicional")
