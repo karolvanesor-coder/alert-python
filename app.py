@@ -207,7 +207,7 @@ def datadog_webhook():
         alert_triggered = True
 
     # 🟧 Mensajes pendientes en colas RabbitMQ
-    if "ALERTQUEUE" in tags or "RABBITMQ" in title:
+    if "ALERTQUEUE" in tags:
         border_color = "orange"
         gif_file = "./gif/alertqueue.gif"
         sound_file = "./sound/alertqueue.mp3"
@@ -230,6 +230,36 @@ def datadog_webhook():
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
 
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+        alert_triggered = True
+
+    # 🟩 Cola específica tracking_pull_queue_co
+    if "QUEUECO" in tags:
+        border_color = "#008000"
+        gif_file = "./gif/alertqueue.gif"  
+        sound_file = "./sound/alertqueue.mp3"
+
+        status_msg = data.get("status", "Sin información adicional")
+        event = data.get("event", {})
+        group_mq = event.get("group", "") or data.get("group", "")
+
+        match = re.search(r"(rabbitmq_queue[:=][\w\-\._]+)", str(group_mq))
+        if not match:
+            match = re.search(r"(rabbitmq_queue[:=][\w\-\._]+)", str(data.get("tags", "")))
+        
+        queue_name = match.group(1) if match else "rabbitmq_queue:tracking_pull_queue_co"
+
+        message = (
+            f"🟩 ALERTA RABBITMQ - TRACKING PULL CO\n"
+            f"🖥️ Host: {host}\n"
+            f"📉 Estado: {status_msg}\n"
+        )
+
+        message_wrapped = "\n".join(textwrap.wrap(message, width=60))
+        
+        threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+        enqueue_alert(gif_file, 6, message_wrapped, border_color)
+        threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
+
         alert_triggered = True
 
     # 🟣 Bloqueos DB
