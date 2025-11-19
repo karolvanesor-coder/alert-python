@@ -143,6 +143,26 @@ def datadog_webhook():
     # Asegurar que group existe para las siguientes comprobaciones
     group = data.get("host", "") or data.get("tags", "") or ""
 
+        # 🔥 Manejo de alertas CPU / MEMORIA / DISCO con TAG
+    if selected_tag and not alert_triggered:
+        cfg = ALERT_CONFIG[selected_tag]
+        border_color = "red"
+        sound_file = cfg["sound"]
+        gif_file = cfg["gif"]
+
+        status_msg = data.get("status", "Sin información adicional")
+
+        message = (
+            f"🚨 ALERTA CRÍTICA\n"
+            f"Tipo: {selected_tag}\n"
+            f"🖥️ Host: {host}\n"
+        )
+
+        message_wrapped = "\n".join(textwrap.wrap(message, width=60))
+
+        threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+        alert_triggered = True
+
     # 🟡 Alerta preventiva de disco
     if selected_tag == "DISCO" and "warn" in alert_type:
         border_color = "yellow"
