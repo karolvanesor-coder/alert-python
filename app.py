@@ -224,7 +224,6 @@ def datadog_webhook():
 
         message = (
             f"🔶 ALERTA RABBITMQ - MENSAJES EN COLA\n"
-            f"📬 Cola: {queue_name}\n"
             f"🖥️ Host: {host}\n"
             f"📉 Estado: {status_msg}"
         )
