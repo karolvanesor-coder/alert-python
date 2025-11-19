@@ -155,7 +155,7 @@ def datadog_webhook():
         message = (
             f"🚨 ALERTA CRÍTICA\n"
             f"Tipo: {selected_tag}\n"
-            f"🖥️ Host: {host}\n"
+            f"🖥️ Host: {host}\"
         )
 
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
