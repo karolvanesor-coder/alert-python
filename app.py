@@ -234,7 +234,7 @@ def datadog_webhook():
 
     # 🟣 Cola específica tracking_pull_queue_co
     if "QUEUECO" in tags:
-        border_color = "#008000"
+        border_color = "purple"
         gif_file = "./gif/alertqueue.gif"  
         sound_file = "./sound/alertqueue.mp3"
 
