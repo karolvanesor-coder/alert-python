@@ -232,7 +232,7 @@ def datadog_webhook():
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
         alert_triggered = True
 
-    # 🟩 Cola específica tracking_pull_queue_co
+    # 🟣 Cola específica tracking_pull_queue_co
     if "QUEUECO" in tags:
         border_color = "#008000"
         gif_file = "./gif/alertqueue.gif"  
@@ -249,7 +249,7 @@ def datadog_webhook():
         queue_name = match.group(1) if match else "rabbitmq_queue:tracking_pull_queue_co"
 
         message = (
-            f"🟩 ALERTA RABBITMQ - TRACKING PULL CO\n"
+            f"🟣 ALERTA RABBITMQ - TRACKING PULL CO\n"
             f"🖥️ Host: {host}\n"
             f"📉 Estado: {status_msg}\n"
         )
