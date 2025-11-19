@@ -146,7 +146,7 @@ def datadog_webhook():
     # 🔥 Manejo de alertas CPU / MEMORIA / DISCO con TAG
     if selected_tag and not alert_triggered:
         cfg = ALERT_CONFIG[selected_tag]
-        border_color = "orange"
+        border_color = "red"
         sound_file = cfg["sound"]
         gif_file = cfg["gif"]
 
@@ -155,8 +155,7 @@ def datadog_webhook():
         message = (
             f"🚨 ALERTA CRÍTICA\n"
             f"Tipo: {selected_tag}\n"
-            f"🖥️ Host: {host}\n"
-            f"📉 Estado: {status_msg}"
+            f"🖥️ Host: {host}"
         )
 
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
