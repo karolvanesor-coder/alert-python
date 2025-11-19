@@ -143,9 +143,9 @@ def datadog_webhook():
     # Asegurar que group existe para las siguientes comprobaciones
     group = data.get("host", "") or data.get("tags", "") or ""
 
-    # 🔥 Manejo de alertas CPU / MEMORIA / DISCO con TAG
-    if selected_tag and not alert_triggered:
-        cfg = ALERT_CONFIG[selected_tag]
+    # 🔥 Manejo de alertas CPU / MEMORIA / DISCO sin depender del TAG
+    if alert_type in ALERT_CONFIG and not alert_triggered:
+        cfg = ALERT_CONFIG[alert_type]
         border_color = "red"
         sound_file = cfg["sound"]
         gif_file = cfg["gif"]
@@ -154,7 +154,7 @@ def datadog_webhook():
 
         message = (
             f"🚨 ALERTA CRÍTICA\n"
-            f"Tipo: {selected_tag}\n"
+            f"Tipo: {alert_type}\n"
             f"🖥️ Host: {host}"
         )
 
