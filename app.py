@@ -219,7 +219,7 @@ def datadog_webhook():
         message = (
             f"🟠 ALERTA RABBITMQ - CONSUMIDORES POR COLA\n"
             f"🖥️ Host: {host}\n"
-            f"📉 Estado: {status_msg}\n"
+            f"📉 Estado: {status_msg}"
         )
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
 
@@ -271,7 +271,7 @@ def datadog_webhook():
         message = (
             f"🟣 ALERTA RABBITMQ - TRACKING PULL CO\n"
             f"🖥️ Host: {host}\n"
-            f"📉 Estado: {status_msg}\n"
+            f"📉 Estado: {status_msg}"
         )
 
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
