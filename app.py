@@ -143,32 +143,53 @@ def datadog_webhook():
     # Asegurar que group existe para las siguientes comprobaciones
     group = data.get("host", "") or data.get("tags", "") or ""
 
-    # Bandera global por cada alerta
-    alert_state = {
-        "CPU": False,
-        "MEMORIA": False,
-        "DISCO": False
-    }
-    # Manejo de alertas CPU / MEMORIA / DISCO sin depender del TAG
-    if alert_type in ALERT_CONFIG and not alert_state[alert_type]:
-        cfg = ALERT_CONFIG[alert_type]
+    # 🔴 ALERTA CPU
+    if "CPU" in tags:
+        cfg = ALERT_CONFIG.get("CPU", {})
         border_color = "red"
-        sound_file = cfg["sound"]
-        gif_file = cfg["gif"]
+        sound_file = cfg.get("sound", DEFAULT_SOUND)
+        gif_file = cfg.get("gif", DEFAULT_GIF)
+
+        status_msg = data.get("status", "Sin información adicional")
+        
+        message = (
+            f"🔴 ALERTA CPU\n"
+            f"🖥️ Host: {host}"
+        )
+        message_wrapped = "\n".join(textwrap.wrap(message, width=60))
+        threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+
+    # 🔵 ALERTA MEMORIA
+    if "MEMORIA" in tags:
+        cfg = ALERT_CONFIG.get("MEMORIA", {})
+        border_color = "blue"
+        sound_file = cfg.get("sound", DEFAULT_SOUND)
+        gif_file = cfg.get("gif", DEFAULT_GIF)
 
         status_msg = data.get("status", "Sin información adicional")
 
         message = (
-            f"🚨 ALERTA CRÍTICA\n"
-            f"Tipo: {alert_type}\n"
+            f"🔵 ALERTA MEMORIA\n"
             f"🖥️ Host: {host}"
         )
-
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
-
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
-        
-        alert_state[alert_type] = True  # Se marca solo esa alerta ejecutada
+
+    # 🟣 ALERTA DISCO
+    if "DISCO" in tags:
+        cfg = ALERT_CONFIG.get("DISCO", {})
+        border_color = "purple"
+        sound_file = cfg.get("sound", DEFAULT_SOUND)
+        gif_file = cfg.get("gif", DEFAULT_GIF)
+
+        status_msg = data.get("status", "Sin información adicional")
+
+        message = (
+            f"🟣 ALERTA DISCO\n"
+            f"🖥️ Host: {host}"
+        )
+        message_wrapped = "\n".join(textwrap.wrap(message, width=60))
+        threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
 
     # 🟡 Alerta preventiva de disco
     if selected_tag == "DISCO" and "warn" in alert_type:
