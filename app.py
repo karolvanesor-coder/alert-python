@@ -22,6 +22,7 @@ ALERT_CONFIG = {
     "DISCO": {"sound": "./sound/disco.mp3", "gif": "./gif/alert2.gif"},
     "ALERTDB": {"sound": "./sound/alertdb.mp3", "gif": "./gif/alertdb.gif"},
     "ALERTMQ": {"sound": "./sound/disponibilidad.mp3", "gif": "./gif/alertdisponibilidad.gif"},
+    "ALERTQUEUE": {"sound": "./sound/alertqueue.mp3", "gif": "./gif/alertqueue.gif"},
     "MEMORIAMQ": {"sound": "./sound/alertmem.mp3", "gif": "./gif/alertmem.gif"},
     "CPUDB": {"sound": "./sound/alertcpudb.mp3", "gif": "./gif/alertcpudb.gif"},
     "CONNDB": {"sound": "./sound/alertconndb.mp3", "gif": "./gif/alertconndb.gif"},
@@ -180,7 +181,7 @@ def datadog_webhook():
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
         alert_triggered = True
 
-    # 🟠 RabbitMQ consumidores
+    # 🟠 RabbitMQ consumidores por cola
     if "ALERTMQ" in tags or "RABBITMQ" in title:
         border_color = "orange"
         gif_file = "./gif/alertdisponibilidad.gif"
@@ -199,6 +200,33 @@ def datadog_webhook():
             f"🟠 ALERTA RABBITMQ - CONSUMIDORES POR COLA\n"
             f"🖥️ Host: {host}\n"
             f"📉 Estado: {status_msg}\n"
+        )
+        message_wrapped = "\n".join(textwrap.wrap(message, width=60))
+
+        threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+        alert_triggered = True
+
+    # 🟧 Mensajes pendientes en colas RabbitMQ
+    if "ALERTQUEUE" in tags or "RABBITMQ" in title:
+        border_color = "orange"
+        gif_file = "./gif/alertqueue.gif"
+        sound_file = "./sound/alertqueue.mp3"
+
+        event = data.get("event", {})
+        group_mq = event.get("group", "") or data.get("group", "")
+        status_msg = data.get("status", "Sin información adicional")
+
+        match = re.search(r"(rabbitmq_queue[:=][\w\-\._]+)", str(group_mq))
+        if not match:
+            match = re.search(r"(rabbitmq_queue[:=][\w\-\._]+)", str(data.get("tags", "")))
+        queue_name = match.group(1) if match else "rabbitmq_queue:Desconocido"
+        host = data.get("host") or queue_name
+
+        message = (
+            f"🔶 ALERTA RABBITMQ - MENSAJES EN COLA\n"
+            f"📬 Cola: {queue_name}\n"
+            f"🖥️ Host: {host}\n"
+            f"📉 Estado: {status_msg}"
         )
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
 
