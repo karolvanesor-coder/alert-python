@@ -522,7 +522,7 @@ def datadog_webhook():
     event = data.get("event", {})
     group = event.get("group", "") or data.get("group", "")
 
-    if "pool:www" in group or "PHPFPM" in tags:
+    if "PHPFPM" in tags:
         cfg = ALERT_CONFIG.get("PHPFPM", {})
         border_color = "#0088FF"
         sound_file = cfg.get("sound", DEFAULT_SOUND)
