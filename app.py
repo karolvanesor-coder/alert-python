@@ -27,7 +27,7 @@ ALERT_CONFIG = {
     "CPUDB": {"sound": "./sound/alertcpudb.mp3", "gif": "./gif/alertcpudb.gif"},
     "CONNDB": {"sound": "./sound/alertconndb.mp3", "gif": "./gif/alertconndb.gif"},
     "SUPERVISOR": {"sound": "./sound/supervisor.mp3", "gif": "./gif/supervisor.gif"},
-    "PHPFPM": {"sound": "./sound/supervisor.mp3", "gif": "./gif/supervisor.gif"},
+    "PHPFPM": {"sound": "./sound/fpm.mp3", "gif": "./gif/fpm.gif"},
 }
 
 DEFAULT_SOUND = "./sound/alert.mp3"
