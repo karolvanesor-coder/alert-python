@@ -518,32 +518,32 @@ def datadog_webhook():
 
         alert_triggered = True
 
-    # 🟢 Test notifications & PHP-FPM
-    event = data.get("event", {})
-    group = event.get("group", "") or data.get("group", "")
-
+    # 🟡 ALERTA PHP-FPM
     if "PHPFPM" in tags:
         cfg = ALERT_CONFIG.get("PHPFPM", {})
-        border_color = "#0088FF"
+        border_color = "gold"
         sound_file = cfg.get("sound", DEFAULT_SOUND)
         gif_file = cfg.get("gif", DEFAULT_GIF)
 
         status_msg = data.get("status", "Sin información")
-        state = data.get("alert_transition", alert_type)
-        host = data.get("host", "Desconocido")
-
         message = (
-            f"🧩 PHP-FPM TEST ALERT\n"
-            f"Host: {host}\n"
-            f"Estado simulado: {state}\n"
-            f"Group: {group}"
+            f"🟡 ALERTA PHP-FPM\n"
+            f"🖥️ Host: {host}\n"
+            f"📉 Estado: {status_msg}"
         )
 
-        enqueue_alert(gif_file, 6, message, border_color)
-        threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
-        threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
+        message_wrapped = "\n".join(textwrap.wrap(message, width=60))
 
-        print("🚀 Test alert PHP-FPM procesada correctamente")
+        # Telegram
+        threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+
+        # Popup sincronizado
+        enqueue_alert(gif_file, 6, message_wrapped, border_color)
+
+        # 🎧 Sonido
+        threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
+
+        return "OK", 200
 
     # 🔴 Resto de alertas críticas (si tienen un tag reconocido)
     if selected_tag is not None and not alert_triggered:
