@@ -27,6 +27,7 @@ ALERT_CONFIG = {
     "CPUDB": {"sound": "./sound/alertcpudb.mp3", "gif": "./gif/alertcpudb.gif"},
     "CONNDB": {"sound": "./sound/alertconndb.mp3", "gif": "./gif/alertconndb.gif"},
     "SUPERVISOR": {"sound": "./sound/supervisor.mp3", "gif": "./gif/supervisor.gif"},
+    "PHPFPM": {"sound": "./sound/supervisor.mp3", "gif": "./gif/supervisor.gif"},
 }
 
 DEFAULT_SOUND = "./sound/alert.mp3"
@@ -516,6 +517,33 @@ def datadog_webhook():
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
 
         alert_triggered = True
+
+    # 🟢 Test notifications & PHP-FPM
+    event = data.get("event", {})
+    group = event.get("group", "") or data.get("group", "")
+
+    if "pool:www" in group or "PHPFPM" in tags:
+        cfg = ALERT_CONFIG.get("PHPFPM", {})
+        border_color = "#0088FF"
+        sound_file = cfg.get("sound", DEFAULT_SOUND)
+        gif_file = cfg.get("gif", DEFAULT_GIF)
+
+        status_msg = data.get("status", "Sin información")
+        state = data.get("alert_transition", alert_type)
+        host = data.get("host", "Desconocido")
+
+        message = (
+            f"🧩 PHP-FPM TEST ALERT\n"
+            f"Host: {host}\n"
+            f"Estado simulado: {state}\n"
+            f"Group: {group}"
+        )
+
+        enqueue_alert(gif_file, 6, message, border_color)
+        threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
+        threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
+
+        print("🚀 Test alert PHP-FPM procesada correctamente")
 
     # 🔴 Resto de alertas críticas (si tienen un tag reconocido)
     if selected_tag is not None and not alert_triggered:
