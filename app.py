@@ -9,11 +9,15 @@ import time
 from queue import Queue
 import re
 import textwrap
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 
 # -------------------------------
-# ⚙️ Configuración de alertas
+# Configuración de alertas
 # -------------------------------
 
 ALERT_CONFIG = {
@@ -34,21 +38,18 @@ DEFAULT_SOUND = "./sound/alert.mp3"
 DEFAULT_GIF = "./gif/alert.gif"
 
 # -------------------------------
-# 💬 Configuración WhatsApp Cloud API
+# Configuración desde ENV
 # -------------------------------
-WHATSAPP_TOKEN = "EAAWr2FNDoE4BPylAk01jG7cvYSGSxirB26uCv03hhU6oLqtATASZBn05ZA5sQ4176soEwBPg4hIP5dX7CgaiJHwZBqPsbY4cq9oaZB5DyFzcWYuPgZBZBt8PZCmoMZCq8J7ajVEBdtMnOndbZAkl6fBegZC7M2v9HmUmYzi9ZBIbera7mVmNHso769fEv3rw1RrHwZDZD"
-WHATSAPP_NUMBER_ID = "847870818407171"
-WHATSAPP_TO_NUMBER = "573026298197"
 
-# 💬 Configuración Telegram Bot
-TELEGRAM_TOKEN = "8341737855:AAFRvmJIiLzKWl-Vzq1NhkzVvdtP544n8zo"
-TELEGRAM_CHAT_IDS = [
-    "-4983450099"
-]
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+TELEGRAM_CHAT_IDS = os.getenv("TELEGRAM_CHAT_IDS", "").split(",")
+
+GOOGLE_CHAT_WEBHOOK = os.getenv("GOOGLE_CHAT_WEBHOOK")
 
 # ======================================================
-# 🧠 SISTEMA DE COLA DE ALERTAS (sincroniza GIF + texto)
+# SISTEMA DE COLA DE ALERTAS (sincroniza GIF + texto)
 # ======================================================
+
 alert_queue = Queue()
 alert_lock = threading.Lock()
 
@@ -78,33 +79,9 @@ def show_popup_pair(gif_file, duration, message, border_color):
     )
 
 # -------------------------------
-# 📲 Enviar WhatsApp (plantilla)
+#  Enviar Telegram
 # -------------------------------
-def send_whatsapp_template(host_name):
-    url = f"https://graph.facebook.com/v22.0/{WHATSAPP_NUMBER_ID}/messages"
-    headers = {"Authorization": f"Bearer {WHATSAPP_TOKEN}", "Content-Type": "application/json"}
-    payload = {
-        "messaging_product": "whatsapp",
-        "to": WHATSAPP_TO_NUMBER,
-        "type": "template",
-        "template": {
-            "name": "alerta_preventiva_disco",
-            "language": {"code": "es_CO"},
-            "components": [{
-                "type": "body",
-                "parameters": [{"type": "text", "text": host_name}]
-            }]
-        }
-    }
-    try:
-        r = requests.post(url, headers=headers, json=payload)
-        print("✅ WhatsApp enviado correctamente" if r.status_code == 200 else f"⚠️ Error WhatsApp: {r.text}")
-    except Exception as e:
-        print("❌ Error WhatsApp:", e)
 
-# -------------------------------
-# 📩 Enviar Telegram
-# -------------------------------
 def send_telegram_message(message):
     for chat_id in TELEGRAM_CHAT_IDS:
         url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
@@ -116,8 +93,27 @@ def send_telegram_message(message):
             print("❌ Error Telegram:", e)
 
 # -------------------------------
-# 📡 Webhook principal
+#  Enviar Google Chat 
 # -------------------------------
+
+def send_google_chat_message(message: str):
+    payload = {
+        "text": message
+    }
+
+    try:
+        r = requests.post(GOOGLE_CHAT_WEBHOOK, json=payload, timeout=5)
+        if r.status_code == 200:
+            print("✅ Google Chat enviado correctamente")
+        else:
+            print(f"⚠️ Error Google Chat: {r.text}")
+    except Exception as e:
+        print("❌ Error Google Chat:", e)
+
+# -------------------------------
+#  Webhook principal
+# -------------------------------
+
 @app.route("/datadog-webhook", methods=["POST"])
 def datadog_webhook():
     data = request.json or {}
@@ -415,7 +411,7 @@ def datadog_webhook():
         group = data.get("group", "")
 
         # ---------------------------------------
-        # 🔍 EXTRAER hostname
+        #  EXTRAER hostname
         # ---------------------------------------
         hostname = "Desconocido"
 
@@ -434,7 +430,7 @@ def datadog_webhook():
                 hostname = m3.group(1)
 
         # ---------------------------------------
-        # 📍 detectar país
+        #  detectar país
         # ---------------------------------------
         country_map = {
             "colombia": "🇨🇴 Colombia", "mexico": "🇲🇽 México", "chile": "🇨🇱 Chile",
@@ -455,7 +451,7 @@ def datadog_webhook():
 
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
 
-        # 📨 Telegram
+        #  Telegram
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
 
         alert_triggered = True
@@ -472,7 +468,7 @@ def datadog_webhook():
         tags_str = data.get("tags", "")
 
         # ---------------------------------------
-        # 🔍 EXTRAER info relevante
+        #  EXTRAER info relevante
         # ---------------------------------------
         hostname = "Desconocido"
         supervisord_server = "Desconocido"
@@ -493,7 +489,7 @@ def datadog_webhook():
             supervisord_server = m2.group(1)
 
         # ---------------------------------------
-        # 📍 detectar país por hostname
+        #  detectar país por hostname
         # ---------------------------------------
         country_map = {
             "colombia": "🇨🇴 Colombia", "mexico": "🇲🇽 México", "chile": "🇨🇱 Chile",
@@ -503,7 +499,7 @@ def datadog_webhook():
         pais_detectado = next((v for k, v in country_map.items() if k in hostname.lower()), "País No identificado")
 
         # ---------------------------------------
-        # 📩 Build message
+        #  Build message
         # ---------------------------------------
         message = (
             "🟠 SUPERVISOR \n"
@@ -540,7 +536,7 @@ def datadog_webhook():
         # Popup sincronizado
         enqueue_alert(gif_file, 6, message_wrapped, border_color)
 
-        # 🎧 Sonido
+        # Sonido
         threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
 
         return "OK", 200
@@ -562,8 +558,8 @@ def datadog_webhook():
     return {"status": "ok", "tags": tags, "host": host}, 200
 
 # -------------------------------
-# 🚀 Inicio
+# Inicio
 # -------------------------------
 if __name__ == "__main__":
-    print("🚀 Flask escuchando en http://127.0.0.1:5006")
+    print("🚀 Flask escuchando en http://127.0.0.1: ")
     app.run(host="0.0.0.0", port=5006, debug=True)
