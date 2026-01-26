@@ -51,7 +51,6 @@ GOOGLE_CHAT_WEBHOOK = os.getenv("GOOGLE_CHAT_WEBHOOK")
 # ======================================================
 
 alert_queue = Queue()
-alert_lock = threading.Lock()
 
 def process_alert_queue():
     """Procesa las alertas en orden para que los GIFs y cuadros no se solapen"""
@@ -85,7 +84,10 @@ def show_popup_pair(gif_file, duration, message, border_color):
 def send_telegram_message(message):
     for chat_id in TELEGRAM_CHAT_IDS:
         url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-        payload = {"chat_id": chat_id, "text": message, "parse_mode": "None"}
+        payload = {
+            "chat_id": chat_id,
+            "text": message
+        }
         try:
             r = requests.post(url, json=payload)
             print(f"✅ Telegram enviado a {chat_id}" if r.status_code == 200 else f"⚠️ Error Telegram: {r.text}")
@@ -97,18 +99,27 @@ def send_telegram_message(message):
 # -------------------------------
 
 def send_google_chat_message(message: str):
-    payload = {
-        "text": message
-    }
+    if not GOOGLE_CHAT_WEBHOOK:
+        print("⚠️ GOOGLE_CHAT_WEBHOOK no definido")
+        return
+
+    payload = {"text": message}
 
     try:
-        r = requests.post(GOOGLE_CHAT_WEBHOOK, json=payload, timeout=5)
-        if r.status_code == 200:
-            print("✅ Google Chat enviado correctamente")
-        else:
-            print(f"⚠️ Error Google Chat: {r.text}")
+        r = requests.post(
+            GOOGLE_CHAT_WEBHOOK,
+            json=payload,
+            headers={"Content-Type": "application/json"},
+            timeout=5
+        )
+
+        print("📨 Google Chat status:", r.status_code)
+
+        if r.status_code != 200:
+            print("❌ Google Chat error:", r.text)
+
     except Exception as e:
-        print("❌ Error Google Chat:", e)
+        print("❌ Google Chat exception:", e)
 
 # -------------------------------
 #  Webhook principal
@@ -138,7 +149,7 @@ def datadog_webhook():
     alert_triggered = False # Flag para saber si se ha manejado la alerta
 
     # Asegurar que group existe para las siguientes comprobaciones
-    group = data.get("host", "") or data.get("tags", "") or ""
+    group = data.get("group", "") or ""
 
     # 🔴 ALERTA CPU
     if "CPU" in tags:
@@ -155,6 +166,9 @@ def datadog_webhook():
         )
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+        threading.Thread(target=send_google_chat_message,args=(message_wrapped,),daemon=True).start()
+
+        alert_triggered = True
 
     # 🔵 ALERTA MEMORIA
     if "MEMORIA" in tags:
@@ -171,6 +185,9 @@ def datadog_webhook():
         )
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+        threading.Thread(target=send_google_chat_message,args=(message_wrapped,),daemon=True).start()
+
+        alert_triggered = True
 
     # 🟣 ALERTA DISCO
     if "DISCO" in tags:
@@ -187,16 +204,36 @@ def datadog_webhook():
         )
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+        threading.Thread(target=send_google_chat_message,args=(message_wrapped,),daemon=True).start()
+
+        alert_triggered = True
 
     # 🟡 Alerta preventiva de disco
     if selected_tag == "DISCO" and "warn" in alert_type:
         border_color = "yellow"
         sound_file = "./sound/alert-warn.mp3"
         gif_file = "./gif/warn.gif"
-        message = f"⚠️ ALERTA PREVENTIVA DE DISCO \nHost: {host}\nVerifica el espacio en disco."
 
-        threading.Thread(target=send_whatsapp_template, args=(host,), daemon=True).start()
-        threading.Thread(target=send_telegram_message, args=(message,), daemon=True).start()
+        message = (
+            f"⚠️ ALERTA PREVENTIVA DE DISCO\n"
+            f"🖥️ Host: {host}\n"
+            f"Verifica el espacio en disco."
+        )
+
+        message_wrapped = "\n".join(textwrap.wrap(message, width=60))
+
+        threading.Thread(
+            target=send_telegram_message,
+            args=(message_wrapped,),
+            daemon=True
+        ).start()
+
+        threading.Thread(
+            target=send_google_chat_message,
+            args=(message_wrapped,),
+            daemon=True
+        ).start()
+
         alert_triggered = True
 
     # 🔴 Memoria RabbitMQ
@@ -224,6 +261,8 @@ def datadog_webhook():
 
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+        threading.Thread(target=send_google_chat_message,args=(message_wrapped,),daemon=True).start()
+
         alert_triggered = True
 
     # 🟠 RabbitMQ consumidores por cola
@@ -249,6 +288,8 @@ def datadog_webhook():
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
 
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+        threading.Thread(target=send_google_chat_message,args=(message_wrapped,),daemon=True).start()
+
         alert_triggered = True
 
     # 🟧 Mensajes pendientes en colas RabbitMQ
@@ -275,12 +316,14 @@ def datadog_webhook():
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
 
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+        threading.Thread(target=send_google_chat_message,args=(message_wrapped,),daemon=True).start()
+
         alert_triggered = True
 
     # 🟣 Cola específica tracking_pull_queue_co
     if "QUEUECO" in tags:
         border_color = "purple"
-        gif_file = "./gif/alertqueue.gif"  
+        gif_file = "./gif/alertqueue.gif"
         sound_file = "./sound/alertqueue.mp3"
 
         status_msg = data.get("status", "Sin información adicional")
@@ -289,8 +332,11 @@ def datadog_webhook():
 
         match = re.search(r"(rabbitmq_queue[:=][\w\-\._]+)", str(group_mq))
         if not match:
-            match = re.search(r"(rabbitmq_queue[:=][\w\-\._]+)", str(data.get("tags", "")))
-        
+            match = re.search(
+                r"(rabbitmq_queue[:=][\w\-\._]+)",
+                str(data.get("tags", ""))
+            )
+
         queue_name = match.group(1) if match else "rabbitmq_queue:tracking_pull_queue_co"
 
         message = (
@@ -300,11 +346,21 @@ def datadog_webhook():
         )
 
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
-        
-        threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
-        enqueue_alert(gif_file, 6, message_wrapped, border_color)
-        threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
 
+        # 📤 Canales
+        threading.Thread(
+            target=send_telegram_message,
+            args=(message_wrapped,),
+            daemon=True
+        ).start()
+
+        threading.Thread(
+            target=send_google_chat_message,
+            args=(message_wrapped,),
+            daemon=True
+        ).start()
+
+        # ⚑ marcar alerta como manejada
         alert_triggered = True
 
     # 🟣 Bloqueos DB
@@ -341,6 +397,8 @@ def datadog_webhook():
         
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+        threading.Thread(target=send_google_chat_message,args=(message_wrapped,),daemon=True).start()
+
         alert_triggered = True
 
     # 🔴 Alerta de alto uso de CPU en Base de Datos
@@ -397,6 +455,7 @@ def datadog_webhook():
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
 
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+        threading.Thread(target=send_google_chat_message,args=(message_wrapped,),daemon=True).start()
 
         alert_triggered = True
 
@@ -453,11 +512,12 @@ def datadog_webhook():
 
         #  Telegram
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+        threading.Thread(target=send_google_chat_message,args=(message_wrapped,),daemon=True).start()
 
         alert_triggered = True
 
    # 🔴 Alerta supervisor
-    if "SUPERVISOR" in tags:
+   if "SUPERVISOR" in tags:
         border_color = "blue"
         gif_file = "./gif/supervisor.gif"
         sound_file = "./sound/supervisor.mp3"
@@ -511,6 +571,7 @@ def datadog_webhook():
 
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
         threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+        threading.Thread(target=send_google_chat_message,args=(message_wrapped,),daemon=True).start()
 
         alert_triggered = True
 
@@ -530,30 +591,47 @@ def datadog_webhook():
 
         message_wrapped = "\n".join(textwrap.wrap(message, width=60))
 
-        # Telegram
-        threading.Thread(target=send_telegram_message, args=(message_wrapped,), daemon=True).start()
+        # 📤 Canales
+        threading.Thread(
+            target=send_telegram_message,
+            args=(message_wrapped,),
+            daemon=True
+        ).start()
 
-        # Popup sincronizado
-        enqueue_alert(gif_file, 6, message_wrapped, border_color)
+        threading.Thread(
+            target=send_google_chat_message,
+            args=(message_wrapped,),
+            daemon=True
+        ).start()
 
-        # Sonido
-        threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
-
-        return "OK", 200
+        # ⚑ marcar alerta como manejada
+        alert_triggered = True
 
     # 🔴 Resto de alertas críticas (si tienen un tag reconocido)
     if selected_tag is not None and not alert_triggered:
         border_color = "red"
         sound_file = ALERT_CONFIG.get(selected_tag, {}).get("sound", DEFAULT_SOUND)
         gif_file = ALERT_CONFIG.get(selected_tag, {}).get("gif", DEFAULT_GIF)
-        message = f"🚨 ALERTA CRÍTICA \nTipo: {selected_tag}\nHost: {host}"
-        alert_triggered = True
-        
-    # Encolar la alerta y reproducir sonido si se activó alguna rama (incluida la por defecto)
-    if alert_triggered or selected_tag is None:
-        enqueue_alert(gif_file, 6, message, border_color)
-        threading.Thread(target=playsound, args=(sound_file,), daemon=True).start()
 
+        message = (
+            f"🚨 ALERTA CRÍTICA\n"
+            f"🖥️ Host: {host}\n"
+            f"📌 Tipo: {selected_tag}"
+        )
+
+        alert_triggered = True
+
+
+    # 📥 Encolar popup + 🔊 sonido
+    # (solo una vez, aunque lleguen varias alertas juntas)
+    if alert_triggered:
+        enqueue_alert(gif_file, 6, message, border_color)
+
+        threading.Thread(
+            target=playsound,
+            args=(sound_file,),
+            daemon=True
+        ).start()
 
     return {"status": "ok", "tags": tags, "host": host}, 200
 
